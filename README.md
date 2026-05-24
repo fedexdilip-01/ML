@@ -17,7 +17,7 @@ Day12- https://fedexdilip-01.github.io/ML/day12.html</br>
 Day13- https://fedexdilip-01.github.io/ML/day13.html</br>
 Day14- https://fedexdilip-01.github.io/ML/day14.html</br>
 
-
+Day15- https://fedexdilip-01.github.io/ML/day15.html</br>
 
 Week 1: Foundations & Classical ML
 Day 1 – Python for ML Basics
