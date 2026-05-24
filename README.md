@@ -1,6 +1,23 @@
 # ML
 
 
+Day1- https://fedexdilip-01.github.io/ML/day1.html</br>
+Day2- https://fedexdilip-01.github.io/ML/day2.html</br>
+Day3- https://fedexdilip-01.github.io/ML/day3.html</br>
+Day4- https://fedexdilip-01.github.io/ML/day4.html</br>
+Day5- https://fedexdilip-01.github.io/ML/day5.html</br>
+Day6- https://fedexdilip-01.github.io/ML/day6.html</br>
+
+Day7- https://fedexdilip-01.github.io/ML/day7.html</br>
+Day8- https://fedexdilip-01.github.io/ML/day8.html</br>
+Day9- https://fedexdilip-01.github.io/ML/day9.html</br>
+Day10- https://fedexdilip-01.github.io/ML/day10.html</br>
+Day11- https://fedexdilip-01.github.io/ML/day11.html</br>
+Day12- https://fedexdilip-01.github.io/ML/day12.html</br>
+Day13- https://fedexdilip-01.github.io/ML/day13.html</br>
+Day14- https://fedexdilip-01.github.io/ML/day14.html</br>
+
+
 
 Week 1: Foundations & Classical ML
 Day 1 – Python for ML Basics
