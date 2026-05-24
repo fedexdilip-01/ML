@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Complete ML/AI Architecture Design: High-Level & Low-Level | E-Commerce Recommendation Example</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1f2b;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5f8a 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.7rem;
+            opacity: 0.92;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .arch-badge {
+            display: inline-block;
+            background: #f4a261;
+            color: #1e3a5f;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-top: 1rem;
+        }
+        .content {
+            padding: 2rem 2.5rem;
+        }
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #2c5f8a;
+            padding-left: 1rem;
+            color: #1e3a5f;
+        }
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .arch-card {
+            background: #fafcfe;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            flex: 1;
+            border: 1px solid #e2eef5;
+        }
+        .arch-card h3 {
+            color: #2c5f8a;
+            margin-bottom: 0.8rem;
+            font-size: 1.3rem;
+        }
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e2eaf0;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .method-header {
+            background: #eef3fa;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: monospace;
+            border-bottom: 1px solid #dee6ef;
+            color: #2c5f8a;
+        }
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 170px;
+        }
+        .detail-item strong {
+            font-weight: 700;
+            color: #3a7b9e;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        code {
+            background: #edf4f9;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #2c5f8a;
+        }
+        pre {
+            background: #121e2c;
+            color: #e2f0ff;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+        .insight-box {
+            background: #fef7e8;
+            border-left: 4px solid #e2a55e;
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+        .viz-svg {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .layer {
+            background: #eef3fa;
+            border-radius: 0.8rem;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid #2c5f8a;
+        }
+        hr { margin: 2rem 0; border: none; height: 1px; background: linear-gradient(to right, #d0e0ec, transparent);}
+        .footer-note {
+            background: #edf4fa;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>🏗️ Complete ML/AI Architecture Design</h1>
+        <div class="sub">High-Level vs Low-Level Design with Simple Example: E-Commerce Recommendation System</div>
+        <div class="arch-badge">What · Why · How · Where</div>
+    </div>
+    <div class="content">
+        <!-- Overview -->
+        <div class="section-title">📐 What is ML/AI Architecture Design?</div>
+        <div class="two-col">
+            <div class="arch-card">
+                <h3>🎯 High-Level Architecture</h3>
+                <p><strong>What:</strong> Bird's eye view of system components and their interactions. Data sources, storage, processing, model training, inference, monitoring.</p>
+                <p><strong>Why:</strong> Aligns stakeholders, shows data flow, identifies bottlenecks, guides technology selection.</p>
+                <p><strong>Where:</strong> System design interviews, solution architecture documents, team presentations.</p>
+            </div>
+            <div class="arch-card">
+                <h3>⚙️ Low-Level Architecture</h3>
+                <p><strong>What:</strong> Detailed design of each component: APIs, database schemas, class diagrams, algorithm pseudocode, infrastructure specs.</p>
+                <p><strong>Why:</strong> Enables implementation, ensures scalability, defines error handling, specifies interfaces.</p>
+                <p><strong>Where:</strong> Development sprints, code reviews, technical specifications.</p>
+            </div>
+        </div>
+
+        <!-- Example System Overview -->
+        <div class="section-title">🛍️ Running Example: E-Commerce Recommendation System</div>
+        <div class="insight-box">
+            💡 <strong>Business Problem:</strong> Show personalized product recommendations to 10M users based on browsing history, purchases, and user similarity.
+        </div>
+
+        <!-- HIGH-LEVEL ARCHITECTURE -->
+        <div class="section-title">🏔️ High-Level Architecture (5 Layers)</div>
+        <div class="method-box">
+            <div class="method-header">🔭 The Big Picture: Data → Model → API → User</div>
+            <div class="viz-svg">
+                <svg width="100%" height="320" viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="900" height="320" fill="#f8fafc" rx="8"/>
+                    <text x="450" y="20" text-anchor="middle" font-size="11" fill="#1e3a5f" font-weight="bold">High-Level ML Architecture: E-Commerce Recommendation System</text>
+                    
+                    <!-- Layer 1: Data Sources -->
+                    <rect x="30" y="40" width="840" height="45" fill="#e63946" rx="6" opacity="0.9"/>
+                    <text x="450" y="60" text-anchor="middle" font-size="11" fill="white" font-weight="bold">📊 Layer 1: Data Sources</text>
+                    <text x="450" y="78" text-anchor="middle" font-size="9" fill="white">User DB | Product Catalog | Clickstream Logs | Purchase History | Reviews</text>
+                    
+                    <line x1="450" y1="85" x2="450" y2="105" stroke="#2c5f8a" stroke-width="2" marker-end="url(#arrowHL)"/>
+                    
+                    <!-- Layer 2: Data Pipeline -->
+                    <rect x="30" y="110" width="840" height="45" fill="#f4a261" rx="6" opacity="0.9"/>
+                    <text x="450" y="130" text-anchor="middle" font-size="11" fill="white" font-weight="bold">⚙️ Layer 2: Data Pipeline (ETL / Stream Processing)</text>
+                    <text x="450" y="148" text-anchor="middle" font-size="9" fill="white">Apache Kafka (real-time) | Spark (batch) | Feature Store</text>
+                    
+                    <line x1="450" y1="155" x2="450" y2="175" stroke="#2c5f8a" stroke-width="2" marker-end="url(#arrowHL)"/>
+                    
+                    <!-- Layer 3: Model Training -->
+                    <rect x="30" y="180" width="840" height="45" fill="#2e9c4a" rx="6" opacity="0.9"/>
+                    <text x="450" y="200" text-anchor="middle" font-size="11" fill="white" font-weight="bold">🧠 Layer 3: Model Training & Registry</text>
+                    <text x="450" y="218" text-anchor="middle" font-size="9" fill="white">Collaborative Filtering | Matrix Factorization | Two-Tower NN | MLflow Registry</text>
+                    
+                    <line x1="450" y1="225" x2="450" y2="245" stroke="#2c5f8a" stroke-width="2" marker-end="url(#arrowHL)"/>
+                    
+                    <!-- Layer 4: Inference -->
+                    <rect x="30" y="250" width="840" height="45" fill="#9c27b0" rx="6" opacity="0.9"/>
+                    <text x="450" y="270" text-anchor="middle" font-size="11" fill="white" font-weight="bold">🚀 Layer 4: Model Serving & Inference</text>
+                    <text x="450" y="288" text-anchor="middle" font-size="9" fill="white">TensorFlow Serving | FastAPI | Redis Cache | A/B Testing</text>
+                    
+                    <defs>
+                        <marker id="arrowHL" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <p style="font-size:0.75rem;">High-level view: Data flows from sources through pipeline to training and finally to real-time inference</p>
+            </div>
+            
+            <div class="layer"><strong>📌 Data Sources</strong> – User DB (postgres), Clickstream (Kafka), Product Catalog (MongoDB)</div>
+            <div class="layer"><strong>📌 Data Pipeline</strong> – Airflow for batch, Kafka Streams for real-time, Feature Store (Feast)</div>
+            <div class="layer"><strong>📌 Model Training</strong> – Alternating Least Squares (ALS), Two-Tower DNN, trained weekly on Spark</div>
+            <div class="layer"><strong>📌 Model Registry</strong> – MLflow tracks versions, metrics, and stages (staging/production)</div>
+            <div class="layer"><strong>📌 Inference</strong> – FastAPI + Redis cache (< 50ms latency), supports 10K QPS</div>
+            <div class="layer"><strong>📌 Monitoring</strong> – Prometheus + Grafana for latency, drift detection (Evidently AI)</div>
+        </div>
+
+        <!-- LOW-LEVEL ARCHITECTURE -->
+        <div class="section-title">🔬 Low-Level Architecture (Detailed Component Design)</div>
+        <div class="method-box">
+            <div class="method-header">📋 API Specification, Database Schema, Algorithm Details</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 API Design</strong><p>POST /recommend/{user_id} → returns top 10 products with scores</p></div>
+                <div class="detail-item"><strong>🗄️ Schema</strong><p>user_embeddings table, product_embeddings table, interaction_log</p></div>
+                <div class="detail-item"><strong>🧮 Algorithm</strong><p>Two-Tower Neural Network with cosine similarity</p></div>
+            </div>
+            <pre># ============ LOW-LEVEL DESIGN: API SPECIFICATION ============
+from pydantic import BaseModel
+from typing import List, Optional
+from fastapi import FastAPI, HTTPException
+
+app = FastAPI(title="Recommendation API", version="2.0.0")
+
+class RecommendationRequest(BaseModel):
+    user_id: str
+    limit: Optional[int] = 10
+    exclude_seen: Optional[bool] = True
+    context: Optional[dict] = None  # { "device": "mobile", "hour": 14 }
+
+class RecommendationResponse(BaseModel):
+    user_id: str
+    recommendations: List[dict]  # [{"product_id": "P123", "score": 0.92, "reason": "because you bought X"}]
+    latency_ms: float
+    model_version: str
+
+@app.post("/v2/recommend", response_model=RecommendationResponse)
+async def get_recommendations(req: RecommendationRequest):
+    """
+    Low-level: 
+    1. Fetch user embedding from Redis (cache)
+    2. If miss, compute from user tower
+    3. Fetch candidate product embeddings
+    4. Compute dot product (cosine similarity)
+    5. Filter seen products
+    6. Return top-k with explanations
+    """
+    pass
+
+# ============ DATABASE SCHEMA (PostgreSQL) ============
+"""
+-- User interactions table
+CREATE TABLE user_interactions (
+    id BIGSERIAL PRIMARY KEY,
+    user_id VARCHAR(64) NOT NULL,
+    product_id VARCHAR(64) NOT NULL,
+    event_type VARCHAR(32),  -- 'view', 'click', 'purchase'
+    timestamp TIMESTAMP DEFAULT NOW(),
+    session_id VARCHAR(64),
+    INDEX idx_user_product (user_id, product_id)
+);
+
+-- Precomputed embeddings (optimized for low-latency)
+CREATE TABLE user_embeddings (
+    user_id VARCHAR(64) PRIMARY KEY,
+    embedding VECTOR(128),  -- pgvector extension
+    updated_at TIMESTAMP
+);
+
+CREATE TABLE product_embeddings (
+    product_id VARCHAR(64) PRIMARY KEY,
+    embedding VECTOR(128),
+    category VARCHAR(64),
+    popularity_score FLOAT
+);
+
+-- Real-time feature store (Redis)
+# Key: user:{user_id}:features -> JSON of recent actions
+# Key: product:{product_id}:embedding -> float array
+"""
+
+# ============ ALGORITHM PSEUDOCODE ============
+class TwoTowerRecommender:
+    """Low-level implementation of two-tower neural network"""
+    
+    def __init__(self, embedding_dim=128, learning_rate=0.001):
+        self.user_tower = self._build_user_tower(embedding_dim)
+        self.item_tower = self._build_item_tower(embedding_dim)
+        self.embedding_dim = embedding_dim
+    
+    def _build_user_tower(self, dim):
+        # Input: user_id, user_features (age, purchase_history_summary)
+        return tf.keras.Sequential([
+            tf.keras.layers.Dense(256, activation='relu'),
+            tf.keras.layers.Dense(128, activation='relu'),
+            tf.keras.layers.Dense(dim)
+        ])
+    
+    def _build_item_tower(self, dim):
+        # Input: product_id, category, price
+        return tf.keras.Sequential([
+            tf.keras.layers.Dense(256, activation='relu'),
+            tf.keras.layers.Dense(128, activation='relu'),
+            tf.keras.layers.Dense(dim)
+        ])
+    
+    def predict(self, user_embedding, item_embeddings):
+        # Cosine similarity (dot product)
+        scores = np.dot(item_embeddings, user_embedding)
+        return scores
+    
+    def train_step(self, user_batch, item_batch, labels):
+        # Loss: Binary cross-entropy for positive/negative pairs
+        user_emb = self.user_tower(user_batch)
+        item_emb = self.item_tower(item_batch)
+        scores = tf.reduce_sum(user_emb * item_emb, axis=1)
+        loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels, scores))
+        return loss</pre>
+        </div>
+
+        <!-- COMPLETE ARCHITECTURE DIAGRAM -->
+        <div class="section-title">🏛️ Complete End-to-End Architecture (E-Commerce RecSys)</div>
+        <div class="viz-svg">
+            <svg width="100%" height="450" viewBox="0 0 950 450" xmlns="http://www.w3.org/2000/svg">
+                <rect width="950" height="450" fill="#f8fafc" rx="8"/>
+                <text x="475" y="20" text-anchor="middle" font-size="11" fill="#1e3a5f" font-weight="bold">Complete ML System Architecture: Training + Inference + Monitoring</text>
+                
+                <!-- Offline (Left) -->
+                <rect x="20" y="40" width="440" height="390" fill="#eef3fa" rx="8" stroke="#2c5f8a" stroke-width="1.5" stroke-dasharray="5,3"/>
+                <text x="240" y="60" text-anchor="middle" font-size="10" fill="#2c5f8a" font-weight="bold">📊 OFFLINE (Batch Training)</text>
+                
+                <!-- Data Sources -->
+                <rect x="40" y="75" width="180" height="50" fill="#e63946" rx="6"/>
+                <text x="130" y="95" text-anchor="middle" font-size="9" fill="white">Clickstream Logs</text>
+                <text x="130" y="112" text-anchor="middle" font-size="7" fill="white">(S3 / Parquet)</text>
+                
+                <rect x="240" y="75" width="180" height="50" fill="#e63946" rx="6"/>
+                <text x="330" y="95" text-anchor="middle" font-size="9" fill="white">Purchase History</text>
+                <text x="330" y="112" text-anchor="middle" font-size="7" fill="white">(PostgreSQL)</text>
+                
+                <!-- Arrow to ETL -->
+                <line x1="130" y1="125" x2="130" y2="155" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowArch)"/>
+                <line x1="330" y1="125" x2="330" y2="155" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowArch)"/>
+                
+                <!-- ETL -->
+                <rect x="100" y="160" width="280" height="45" fill="#f4a261" rx="6"/>
+                <text x="240" y="180" text-anchor="middle" font-size="9" fill="white">Apache Spark / Airflow</text>
+                <text x="240" y="195" text-anchor="middle" font-size="8" fill="white">ETL: Feature Engineering, Clean, Aggregate</text>
+                
+                <!-- Arrow to Feature Store -->
+                <line x1="240" y1="205" x2="240" y2="230" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowArch)"/>
+                
+                <!-- Feature Store -->
+                <rect x="140" y="235" width="200" height="40" fill="#2e9c4a" rx="6"/>
+                <text x="240" y="253" text-anchor="middle" font-size="9" fill="white">Feature Store (Feast / Hopsworks)</text>
+                <text x="240" y="266" text-anchor="middle" font-size="7" fill="white">user_features, product_features, interactions</text>
+                
+                <!-- Arrow to Training -->
+                <line x1="240" y1="275" x2="240" y2="300" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowArch)"/>
+                
+                <!-- Model Training -->
+                <rect x="80" y="305" width="320" height="55" fill="#9c27b0" rx="6"/>
+                <text x="240" y="325" text-anchor="middle" font-size="9" fill="white">Model Training (Kubeflow / SageMaker)</text>
+                <text x="240" y="340" text-anchor="middle" font-size="8" fill="white">Two-Tower DNN | ALS | LightFM</text>
+                <text x="240" y="353" text-anchor="middle" font-size="7" fill="white">Hyperparameter Tuning | Cross-validation</text>
+                
+                <!-- Model Registry -->
+                <rect x="100" y="370" width="280" height="40" fill="#1e3a5f" rx="6"/>
+                <text x="240" y="390" text-anchor="middle" font-size="9" fill="white">Model Registry (MLflow)</text>
+                <text x="240" y="403" text-anchor="middle" font-size="7" fill="white">version: v2.3.1 | AUC: 0.89 | stage: production</text>
+                
+                <!-- ONLINE (Right) -->
+                <rect x="490" y="40" width="440" height="390" fill="#eef6f2" rx="8" stroke="#2d6a4f" stroke-width="1.5" stroke-dasharray="5,3"/>
+                <text x="710" y="60" text-anchor="middle" font-size="10" fill="#2d6a4f" font-weight="bold">⚡ ONLINE (Real-time Inference)</text>
+                
+                <!-- API Gateway -->
+                <rect x="530" y="80" width="180" height="40" fill="#e63946" rx="6"/>
+                <text x="620" y="100" text-anchor="middle" font-size="9" fill="white">Load Balancer / API Gateway</text>
+                <text x="620" y="113" text-anchor="middle" font-size="7" fill="white">(Nginx / AWS ALB)</text>
+                
+                <line x1="620" y1="120" x2="620" y2="145" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowArch)"/>
+                
+                <!-- Cache -->
+                <rect x="540" y="150" width="160" height="40" fill="#f4a261" rx="6"/>
+                <text x="620" y="170" text-anchor="middle" font-size="9" fill="white">Redis Cache</text>
+                <text x="620" y="183" text-anchor="middle" font-size="7" fill="white">user_embedding TTL 1h</text>
+                
+                <line x1="620" y1="190" x2="620" y2="215" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowArch)"/>
+                
+                <!-- Inference Service -->
+                <rect x="530" y="220" width="180" height="50" fill="#2e9c4a" rx="6"/>
+                <text x="620" y="240" text-anchor="middle" font-size="9" fill="white">Inference Service</text>
+                <text x="620" y="255" text-anchor="middle" font-size="8" fill="white">FastAPI + TensorFlow Serving</text>
+                <text x="620" y="265" text-anchor="middle" font-size="7" fill="white">3 replicas, autoscaling</text>
+                
+                <!-- Arrow to candidate gen -->
+                <line x1="710" y1="245" x2="780" y2="245" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowArch)"/>
+                
+                <!-- Vector DB -->
+                <rect x="785" y="220" width="125" height="50" fill="#9c27b0" rx="6"/>
+                <text x="847" y="240" text-anchor="middle" font-size="8" fill="white">Vector DB</text>
+                <text x="847" y="255" text-anchor="middle" font-size="7" fill="white">(Pinecone /</text>
+                <text x="847" y="265" text-anchor="middle" font-size="7" fill="white">Milvus)</text>
+                
+                <!-- Response -->
+                <rect x="620" y="320" width="200" height="45" fill="#1e3a5f" rx="6"/>
+                <text x="720" y="340" text-anchor="middle" font-size="9" fill="white">Recommendation Response</text>
+                <text x="720" y="355" text-anchor="middle" font-size="7" fill="white">top-10 products + scores</text>
+                
+                <line x1="620" y1="270" x2="620" y2="315" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowArch)"/>
+                
+                <!-- Monitoring -->
+                <rect x="530" y="380" width="180" height="35" fill="#e63946" rx="6"/>
+                <text x="620" y="400" text-anchor="middle" font-size="8" fill="white">Prometheus + Grafana</text>
+                <text x="620" y="412" text-anchor="middle" font-size="7" fill="white">latency / QPS / drift</text>
+                
+                <defs>
+                    <marker id="arrowArch" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                        <polygon points="0 0, 8 3, 0 6" fill="#2c5f8a"/>
+                    </marker>
+                </defs>
+            </svg>
+            <p style="font-size:0.75rem;">Complete architecture: Offline training pipeline (left) + Online inference system (right) + Monitoring</p>
+        </div>
+
+        <!-- DESIGN DECISIONS TABLE -->
+        <div class="section-title">📋 Design Decisions: High vs Low Level</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefefe; border-radius: 16px;">
+                <thead style="background:#e2ecf5;"><tr><th style="padding:12px;">Aspect</th><th style="padding:12px;">High-Level Decision</th><th style="padding:12px;">Low-Level Implementation</th><th style="padding:12px;">Example (RecSys)</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Data Storage</strong></td><td style="padding:10px;">Use data lake for raw events, warehouse for features</td><td style="padding:10px;">S3 (parquet) + PostgreSQL + Redis</td><td style="padding:10px;">Clickstream logs in S3, embeddings in Redis</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Model Training</strong></td><td style="padding:10px;">Batch training weekly on GPU cluster</td><td style="padding:10px;">Kubeflow + Spot instances + MLflow</td><td style="padding:10px;">Two-tower model trains 4hrs on 8x V100</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Inference Latency</strong></td><td style="padding:10px;">P99 < 100ms for 10K QPS</td><td style="padding:10px;">FastAPI + Redis cache + async batch</td><td style="padding:10px;">50ms average, Redis hit rate 85%</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Model Updates</strong></td><td style="padding:10px;">Daily embedding recompute, weekly full retrain</td><td style="padding:10px;">Airflow DAG + model version swap with 0% downtime</td><td style="padding:10px;">Blue-green deployment, A/B testing 10% traffic</td></tr>
+                    <tr><td style="padding:10px;"><strong>Monitoring</strong></td><td style="padding:10px;">Business metrics + system metrics + ML metrics</td><td style="padding:10px;">Prometheus + Evidently AI + custom dashboards</td><td style="padding:10px;">Alert if AUC drops >0.05 or latency >200ms</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SIMPLE EXAMPLE: Complete Architecture for Small Project -->
+        <div class="section-title">🪄 Simple Example: Movie Recommendation MVP (Minimal Architecture)</div>
+        <div class="method-box">
+            <div class="method-header">🎬 Small-scale architecture for learning / prototyping</div>
+            <pre>"""
+=========================================================
+SIMPLE END-TO-END MOVIE RECOMMENDATION SYSTEM (MVP)
+High-Level: Single server, local files, notebook + Flask
+=========================================================
+"""
+
+# ============ HIGH-LEVEL (Simplified) ============
+"""
+Components:
+1. Data: ratings.csv, movies.csv (local files)
+2. Processing: Pandas in Jupyter Notebook
+3. Model: Surprise library (SVD) or LightFM
+4. Inference: Flask API (single endpoint)
+5. Frontend: Streamlit dashboard
+"""
+
+# ============ LOW-LEVEL IMPLEMENTATION ============
+import pandas as pd
+from surprise import Dataset, Reader, SVD
+from surprise.model_selection import train_test_split
+import joblib
+from flask import Flask, request, jsonify
+
+# ---- Training Script (train.py) ----
+def train_movie_recommender():
+    # Load data
+    ratings = pd.read_csv('ratings.csv')
+    reader = Reader(rating_scale=(0.5, 5.0))
+    data = Dataset.load_from_df(ratings[['userId', 'movieId', 'rating']], reader)
+    trainset, testset = train_test_split(data, test_size=0.2)
+    
+    # Train SVD model
+    model = SVD(n_factors=50, lr_all=0.005, reg_all=0.02)
+    model.fit(trainset)
+    
+    # Save model
+    joblib.dump(model, 'movie_recommender.pkl')
+    return model
+
+# ---- API (app.py) ----
+app = Flask(__name__)
+model = joblib.load('movie_recommender.pkl')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.json
+    user_id = data['user_id']
+    movie_id = data['movie_id']
+    prediction = model.predict(user_id, movie_id).est
+    return jsonify({'user_id': user_id, 'movie_id': movie_id, 'rating': prediction})
+
+@app.route('/recommend/<user_id>', methods=['GET'])
+def recommend(user_id):
+    # Get all movies not seen by user, predict ratings, return top 10
+    all_movies = pd.read_csv('movies.csv')['movieId'].tolist()
+    predictions = [(movie, model.predict(user_id, movie).est) for movie in all_movies]
+    top_10 = sorted(predictions, key=lambda x: x[1], reverse=True)[:10]
+    return jsonify({'user_id': user_id, 'recommendations': top_10})
+
+if __name__ == '__main__':
+    app.run(port=5000)
+
+# ---- Streamlit Frontend (ui.py) ----
+import streamlit as st
+import requests
+
+st.title("🎬 Movie Recommender")
+user_id = st.text_input("Enter User ID", "1")
+if st.button("Get Recommendations"):
+    response = requests.get(f"http://localhost:5000/recommend/{user_id}")
+    recs = response.json()['recommendations']
+    for movie_id, rating in recs:
+        st.write(f"Movie {movie_id}: predicted rating {rating:.2f}")
+
+# Deployment: docker-compose up (Flask + Streamlit)
+"""
+version: '3.8'
+services:
+  api:
+    build: ./api
+    ports:
+      - "5000:5000"
+  frontend:
+    build: ./frontend
+    ports:
+      - "8501:8501"
+"""</pre>
+            <div class="insight-box">📌 <strong>Key Takeaway:</strong> Even simple projects benefit from architecture design! High-level helps scope, low-level guides implementation. Start simple, scale complexity as needed.</div>
+        </div>
+
+        <!-- Architecture Checklist -->
+        <div class="section-title">✅ ML Architecture Design Checklist</div>
+        <div class="two-col">
+            <div class="arch-card">
+                <h3>📌 High-Level Questions</h3>
+                <p>✓ What data sources are available?<br>✓ What's the prediction latency requirement?<br>✓ Batch or real-time?<br>✓ How often to retrain?<br>✓ Expected QPS?<br>✓ Cloud or on-prem?</p>
+            </div>
+            <div class="arch-card">
+                <h3>📌 Low-Level Questions</h3>
+                <p>✓ API specification (OpenAPI)?<br>✓ Database schema (indexes, partitions)?<br>✓ Model serialization format?<br>✓ Error handling & retries?<br>✓ Observability (logs, metrics, traces)?<br>✓ CI/CD pipeline?</p>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            🌟 <strong>Complete ML/AI Architecture Summary:</strong><br><br>
+            <strong>High-Level Architecture</strong> answers "What components exist and how do they interact?" — focuses on data flow, system boundaries, technology choices, and stakeholder alignment.<br><br>
+            <strong>Low-Level Architecture</strong> answers "How exactly does each component work?" — includes API specs, database schemas, algorithm pseudocode, class diagrams, and infrastructure configuration.<br><br>
+            <strong>Example (RecSys):</strong> High-level: Data Sources → ETL → Training → Registry → Serving → Client. Low-level: Flask endpoints, PostgreSQL VECTOR extension, Two-Tower NN in TensorFlow, Redis TTL policies, Prometheus alerts.<br><br>
+            <strong>Pro Tip:</strong> Always start with high-level to validate requirements, then drill into low-level for critical components. Document both for your team!
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #4f7ea3;">🧪 Try: Draw your own high-level diagram for a project you're building, then write low-level specs for one component!</div>
+    </div>
+</div>
+</body>
+</html>
