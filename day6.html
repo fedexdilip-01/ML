@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 6: SVM & K-Nearest Neighbors | Margin, Kernels, Distance Metrics + Digit Recognition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f2f4f6;
+            color: #1a1e24;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1f4e6e 0%, #2a6f8f 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.7rem;
+            opacity: 0.92;
+            border-left: 3px solid #8bc9e6;
+            padding-left: 1rem;
+        }
+        .content {
+            padding: 2rem 2.5rem;
+        }
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+        .topic-card {
+            flex: 1;
+            background: #fafcfd;
+            border-radius: 1.5rem;
+            padding: 1.3rem 1.5rem;
+            border: 1px solid #e0e9ef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 28px -12px rgba(0,0,0,0.1);
+        }
+        .topic-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .topic-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; color: #286f8f; }
+        .badge {
+            background: #e2f0f5;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.5rem 0 0.7rem;
+            color: #1f6e8c;
+        }
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #2f86a3;
+            padding-left: 1rem;
+            color: #1c4e66;
+        }
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e2ecf2;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .method-header {
+            background: #eff6fa;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: monospace;
+            border-bottom: 1px solid #dee9ef;
+            color: #2a748f;
+        }
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 170px;
+        }
+        .detail-item strong {
+            font-weight: 700;
+            color: #2a7f9e;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        code {
+            background: #edf4f8;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #2a6f8a;
+        }
+        pre {
+            background: #121e26;
+            color: #ddf4ff;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+        .insight-box {
+            background: #fef7e8;
+            border-left: 4px solid #e2a55e;
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+        .formula {
+            background: #eef3f7;
+            padding: 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: monospace;
+            margin: 0.8rem 0;
+        }
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .comp-card {
+            background: #fafcfe;
+            border-radius: 1rem;
+            padding: 1rem;
+            flex: 1;
+            border: 1px solid #e2eef5;
+        }
+        hr { margin: 2rem 0; border: none; height: 1px; background: linear-gradient(to right, #d0e2ec, transparent);}
+        .footer-note {
+            background: #f0f6fa;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>✍️ Day 6 – SVM & K-Nearest Neighbors</h1>
+        <div class="sub">Maximum Margin, Kernel Trick, Distance Metrics | MNIST Digit Recognition (SVC vs KNN)</div>
+    </div>
+    <div class="content">
+        <!-- 3 core concepts -->
+        <div class="topic-grid">
+            <div class="topic-card"><div class="topic-icon">📏</div><div class="badge">SVM Core</div><h3>Maximal Margin</h3><p><strong>What?</strong> SVM finds hyperplane that maximizes distance (margin) to nearest points from each class (support vectors).</p><p><strong>Why?</strong> Larger margin → better generalization, lower overfitting.</p><p><strong>Where?</strong> Image classification, text categorization, bioinformatics.</p></div>
+            <div class="topic-card"><div class="topic-icon">🌀</div><div class="badge">SVM Kernel</div><h3>Kernel Trick</h3><p><strong>What?</strong> Map data to higher dimension without explicit computation (RBF, polynomial). Enables non-linear decision boundaries.</p><p><strong>Why?</strong> Handles complex patterns, infinite-dimensional feature spaces efficiently.</p><p><strong>Where?</strong> Non-linearly separable data, digit recognition, NLP.</p></div>
+            <div class="topic-card"><div class="topic-icon">📐</div><div class="badge">KNN Distance</div><h3>Distance Metrics</h3><p><strong>What?</strong> Euclidean, Manhattan, Minkowski. Measures similarity between points.</p><p><strong>Why?</strong> Choice affects decision boundaries & performance.</p><p><strong>Where?</strong> Recommendation systems, anomaly detection, pattern recognition.</p></div>
+        </div>
+
+        <!-- SVM Margin deep dive -->
+        <div class="section-title">📐 1. SVM & Maximum Margin Principle</div>
+        <div class="method-box">
+            <div class="method-header">🎯 Separating hyperplane & support vectors</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Mathematical goal</strong><p>For linearly separable data: maximize margin = 2/||w|| subject to yᵢ(w·xᵢ + b) ≥ 1. Support vectors lie on margin boundaries.</p></div>
+                <div class="detail-item"><strong>🧠 Why margin maximization?</strong><p>Largest margin reduces classifier's variance, improves robustness to noise. Structural Risk Minimization.</p></div>
+                <div class="detail-item"><strong>⚙️ Soft margin (C parameter)</strong><p>Allows misclassifications: trades off margin width vs penalty. Lower C → wider margin, higher tolerance.</p></div>
+            </div>
+            <div class="formula">📌 Hinge loss + regularization: min (1/2)||w||² + C Σ max(0, 1 - yᵢ(w·xᵢ + b))</div>
+            <pre>from sklearn.svm import SVC
+from sklearn.datasets import make_blobs
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Visualize margin concept (simple 2D)
+X, y = make_blobs(n_samples=50, centers=2, random_state=6, cluster_std=1.5)
+svm = SVC(kernel='linear', C=1000)  # hard margin approx
+svm.fit(X, y)
+
+# Get support vectors
+support_vectors = svm.support_vectors_
+print(f"Number of support vectors: {len(support_vectors)}")
+# Plot decision boundary & margin (conceptual)
+plt.scatter(X[:,0], X[:,1], c=y, cmap='coolwarm', s=30)
+plt.scatter(support_vectors[:,0], support_vectors[:,1], marker='o', facecolors='none', edgecolors='k', s=150, label='Support Vectors')
+plt.title('SVM: Max Margin Hyperplane (linear)')
+plt.legend()
+plt.show()</pre>
+        </div>
+
+        <!-- Kernels: RBF, Polynomial -->
+        <div class="section-title">🌀 2. Kernel Trick – Non-linear Decision Boundaries</div>
+        <div class="method-box">
+            <div class="method-header">⚡ RBF Kernel: most popular for complex data</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🎯 What kernels do</strong><p>K(xᵢ, xⱼ) = φ(xᵢ)·φ(xⱼ). RBF: exp(-γ||xᵢ - xⱼ||²). Maps to infinite-dim space.</p></div>
+                <div class="detail-item"><strong>🧠 Why kernel trick matters</strong><p>Computes dot product in high-dimensional space without explicit mapping. Enables SVM to classify concentric circles, spirals.</p></div>
+                <div class="detail-item"><strong>🔧 Key parameters</strong><p><code>C</code> (regularization), <code>gamma</code> (RBF influence). High gamma → complex boundaries, risk overfitting.</p></div>
+            </div>
+            <pre>from sklearn.datasets import make_circles
+X_circ, y_circ = make_circles(n_samples=100, factor=0.5, noise=0.05, random_state=42)
+
+# Linear SVM fails, RBF works
+svm_linear = SVC(kernel='linear', C=1)
+svm_rbf = SVC(kernel='rbf', gamma=2, C=1)
+svm_linear.fit(X_circ, y_circ)
+svm_rbf.fit(X_circ, y_circ)
+
+print(f"Linear SVM accuracy: {svm_linear.score(X_circ, y_circ):.3f}")
+print(f"RBF Kernel SVM accuracy: {svm_rbf.score(X_circ, y_circ):.3f} → captures non-linear pattern")</pre>
+            <div class="insight-box">💡 Kernel trick is why SVM excels on image & text: RBF can separate digits that are not linearly separable in pixel space.</div>
+        </div>
+
+        <!-- KNN & distance metrics -->
+        <div class="section-title">📏 3. K-Nearest Neighbors & Distance Metrics</div>
+        <div class="method-box">
+            <div class="method-header">🎲 Lazy learning: proximity-based classification</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 Euclidean vs Manhattan</strong><p>Euclidean (L2): √Σ(xᵢ-yᵢ)². Manhattan (L1): Σ|xᵢ-yᵢ|. Minkowski generalizes with p parameter.</p></div>
+                <div class="detail-item"><strong>🧠 Why metric matters</strong><p>High-dimensional data: Manhattan sometimes more robust. Scaling features critical (KNN distance-sensitive).</p></div>
+                <div class="detail-item"><strong>📍 Where KNN shines</strong><p>Small to medium datasets, multi-class problems (digits), recommenders, low inference time not critical.</p></div>
+            </div>
+            <pre>from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+# Example: impact of different metrics on synthetic data
+X_demo = np.random.rand(200, 5)
+y_demo = (X_demo[:,0] + X_demo[:,1] > 1).astype(int)
+knn_euclid = KNeighborsClassifier(n_neighbors=5, metric='euclidean')
+knn_manhattan = KNeighborsClassifier(n_neighbors=5, metric='manhattan')
+knn_euclid.fit(X_demo, y_demo)
+knn_manhattan.fit(X_demo, y_demo)
+print("Euclidean vs Manhattan on small random data - both work, but scaling crucial in real world.")</pre>
+        </div>
+
+        <!-- MNIST Digit Recognition: SVM vs KNN -->
+        <div class="section-title">🔢 MNIST Digit Recognition (small subset) – SVC vs KNeighborsClassifier</div>
+        <div class="method-box">
+            <div class="method-header">🧠 Compare SVM (RBF) and KNN on handwritten digits</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📦 Dataset</strong><p>Load_digits (8x8 images, 1797 samples, classes 0-9). Standard benchmark for classification.</p></div>
+                <div class="detail-item"><strong>🎯 What we compare</strong><p>Accuracy, training time, confusion matrix. SVM uses kernel trick; KNN uses Euclidean distance.</p></div>
+                <div class="detail-item"><strong>⚙️ Preprocessing</strong><p>Scale pixels to [0,1] or standardize → crucial for both SVM (margin) and KNN (distance).</p></div>
+            </div>
+            <pre>from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import time
+
+# Load digits (MNIST small)
+digits = load_digits()
+X, y = digits.data, digits.target
+print(f"Digit dataset shape: {X.shape}, unique classes: {digits.target_names}")
+
+# Train/test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Scaling: both SVM & KNN benefit
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# SVM with RBF kernel
+svm_model = SVC(kernel='rbf', gamma='scale', C=1.0, random_state=42)
+start = time.time()
+svm_model.fit(X_train_scaled, y_train)
+svm_train_time = time.time() - start
+y_pred_svm = svm_model.predict(X_test_scaled)
+svm_acc = accuracy_score(y_test, y_pred_svm)
+
+# KNN with k=5 (default Euclidean)
+knn_model = KNeighborsClassifier(n_neighbors=5, metric='euclidean')
+start = time.time()
+knn_model.fit(X_train_scaled, y_train)
+knn_train_time = time.time() - start
+y_pred_knn = knn_model.predict(X_test_scaled)
+knn_acc = accuracy_score(y_test, y_pred_knn)
+
+print(f"\n📊 Results on Digits (MNIST small):")
+print(f"✅ SVM (RBF) Accuracy: {svm_acc:.4f} | Training time: {svm_train_time:.3f}s")
+print(f"✅ KNN (k=5) Accuracy: {knn_acc:.4f} | Training time: {knn_train_time:.3f}s (lazy, fast 'training')")
+print("\nSVM Classification Report:")
+print(classification_report(y_test, y_pred_svm))
+
+# Confusion matrix heatmap (optional text display)
+cm_svm = confusion_matrix(y_test, y_pred_svm)
+print("SVM Confusion Matrix (diagonal dominant):\n", cm_svm)</pre>
+            <div class="insight-box">📌 <strong>Typical outcome:</strong> SVM (RBF) ~98-99% accuracy, KNN ~96-98% on digits. SVM often edges out KNN but KNN is simpler and faster to "train" (lazy). Both need scaling.</div>
+        </div>
+
+        <!-- Visualizing digits & metrics -->
+        <div class="method-box">
+            <div class="method-header">🖼️ Visualizing Misclassifications & Confusion Matrix</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🔍 Why confusion matrix matters</strong><p>Shows which digits are confused (e.g., 8 vs 3, 9 vs 4). Helps refine model or add features.</p></div>
+                <div class="detail-item"><strong>⚙️ Where to improve</strong><p>Increase K in KNN, tune SVM gamma/C, or use PCA for dimensionality reduction.</p></div>
+            </div>
+            <pre>import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Confusion matrix for SVM
+cm = confusion_matrix(y_test, y_pred_svm)
+plt.figure(figsize=(8,6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=digits.target_names, yticklabels=digits.target_names)
+plt.title('Confusion Matrix - SVM RBF on Digits')
+plt.xlabel('Predicted')
+plt.ylabel('True')
+plt.show()
+
+# Show some misclassified examples
+misclassified_idx = np.where(y_test != y_pred_svm)[0]
+if len(misclassified_idx) > 0:
+    print(f"Number of misclassifications: {len(misclassified_idx)}")
+    fig, axes = plt.subplots(1, min(5, len(misclassified_idx)), figsize=(10,3))
+    for i, idx in enumerate(misclassified_idx[:5]):
+        axes[i].imshow(X_test[idx].reshape(8,8), cmap='gray')
+        axes[i].set_title(f"True: {y_test[idx]}, Pred: {y_pred_svm[idx]}")
+        axes[i].axis('off')
+    plt.show()</pre>
+        </div>
+
+        <!-- Distance metrics comparison on digits -->
+        <div class="section-title">📐 Distance Metrics in KNN – Effect on Accuracy</div>
+        <div class="two-col">
+            <div class="comp-card"><strong>📏 Euclidean (L2)</strong><br>Default, works well for digits. Sensitive to scale, assumes isotropic features.<br><code>accuracy ~ 0.975</code></div>
+            <div class="comp-card"><strong>📐 Manhattan (L1)</strong><br>Robust to outliers, sometimes better for high-dimensional sparse data.<br><code>accuracy often similar, slightly lower</code></div>
+            <div class="comp-card"><strong>⚙️ Minkowski (p=3)</strong><br>Generalization. p=1 Manhattan, p=2 Euclidean. Tune via grid search.</div>
+        </div>
+        <pre># Compare distance metrics on digits (small sample)
+for metric in ['euclidean', 'manhattan']:
+    knn = KNeighborsClassifier(n_neighbors=5, metric=metric)
+    knn.fit(X_train_scaled, y_train)
+    acc = knn.score(X_test_scaled, y_test)
+    print(f"KNN with {metric}: accuracy = {acc:.4f}")</pre>
+
+        <!-- SVM vs KNN: What/Why/Where comparison -->
+        <div class="section-title">⚖️ SVM vs KNN – Decision Framework</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefefe; border-radius: 16px;">
+                <thead style="background:#e2f0f5;"><tr><th style="padding:12px;">Aspect</th><th style="padding:12px;">SVM (with kernel)</th><th style="padding:12px;">K-Nearest Neighbors</th><th style="padding:12px;">When to choose</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Training</strong></td><td>O(n²) to O(n³), slower for large n</td><td>Lazy, virtually no training</td><td>KNN for online updates; SVM for moderate data (<50k)</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Inference</strong></td><td>Fast (only support vectors)</td><td>Slow (compares to all training points)</td><td>SVM for low-latency prediction</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Non-linear boundaries</strong></td><td>Excellent via kernel trick</td><td>Good, but depends on distance metric</td><td>SVM for complex manifolds</td></tr>
+                    <tr><td style="padding:10px;"><strong>Memory</strong></td><td>Stores support vectors</td><td>Stores entire training set</td><td>KNN memory-heavy for large data</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Real-world best practices: scaling & parameters -->
+        <div class="method-box">
+            <div class="method-header">🧪 Hyperparameter Tuning for Digits</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🎯 For SVM</strong><p>GridSearch over C (0.1,1,10) and gamma ('scale', 0.01,0.1). Higher gamma can overfit.</p></div>
+                <div class="detail-item"><strong>🎯 For KNN</strong><p>n_neighbors (3-11), metric (euclidean/manhattan), weights ('uniform'/'distance').</p></div>
+            </div>
+            <pre>from sklearn.model_selection import GridSearchCV
+
+# Quick grid for SVM (small subset)
+param_grid = {'C': [0.5, 1, 5], 'gamma': ['scale', 0.05]}
+svm_base = SVC(kernel='rbf')
+grid = GridSearchCV(svm_base, param_grid, cv=3, scoring='accuracy')
+grid.fit(X_train_scaled, y_train)
+print(f"Best SVM parameters: {grid.best_params_}")
+print(f"Best CV accuracy: {grid.best_score_:.4f}")</pre>
+        </div>
+
+        <div class="footer-note">
+            ✨ <strong>Day 6 Wrap-Up:</strong> SVM maximizes margin and uses kernels for non-linear data, while KNN relies on distance metrics. In digit recognition, SVM (RBF) often achieves higher accuracy (≈99%) than KNN (≈97%), but both are powerful baselines. Scaling is essential for both. Choose SVM for complex boundaries & speed at inference, KNN for simplicity & small datasets.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #4f8aac;">🧪 Try: Use PCA to reduce digit dimensions to 30, then compare SVM vs KNN – observe speed & accuracy trade-off.</div>
+    </div>
+</div>
+</body>
+</html>
