@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 8: Ensemble Methods – XGBoost, Voting, Stacking | Fraud Detection + GridSearchCV</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1f2b;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1a3c34 0%, #2d6a4f 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.7rem;
+            opacity: 0.92;
+            border-left: 3px solid #a7e0b0;
+            padding-left: 1rem;
+        }
+        .content {
+            padding: 2rem 2.5rem;
+        }
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+        .topic-card {
+            flex: 1;
+            background: #fafcfe;
+            border-radius: 1.5rem;
+            padding: 1.3rem 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 28px -12px rgba(0,0,0,0.1);
+        }
+        .topic-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .topic-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; color: #2c7a5e; }
+        .badge {
+            background: #e8f5ef;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.5rem 0 0.7rem;
+            color: #2d6a4f;
+        }
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #2d6a4f;
+            padding-left: 1rem;
+            color: #1b4d3a;
+        }
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e2eaf0;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .method-header {
+            background: #eef6f2;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: monospace;
+            border-bottom: 1px solid #dee8e2;
+            color: #2d6a4f;
+        }
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 170px;
+        }
+        .detail-item strong {
+            font-weight: 700;
+            color: #3a7b62;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        code {
+            background: #edf4f0;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #2d6a4f;
+        }
+        pre {
+            background: #121e1a;
+            color: #e2f0e8;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+        .insight-box {
+            background: #fef7e8;
+            border-left: 4px solid #e2a55e;
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+        .formula {
+            background: #eef3f7;
+            padding: 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: monospace;
+            margin: 0.8rem 0;
+        }
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .comp-card {
+            background: #fafcfe;
+            border-radius: 1rem;
+            padding: 1rem;
+            flex: 1;
+            border: 1px solid #e2eef5;
+        }
+        .viz-svg {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        hr { margin: 2rem 0; border: none; height: 1px; background: linear-gradient(to right, #d0e0ec, transparent);}
+        .footer-note {
+            background: #edf4fa;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>⚡ Day 8 – Ensemble Methods: XGBoost, Voting, Stacking</h1>
+        <div class="sub">Boosting, Hyperparameter Tuning | Credit Card Fraud Detection with GridSearchCV</div>
+    </div>
+    <div class="content">
+        <!-- Core ensemble topics -->
+        <div class="topic-grid">
+            <div class="topic-card"><div class="topic-icon">🚀</div><div class="badge">Gradient Boosting</div><h3>XGBoost</h3><p><strong>What?</strong> Extreme Gradient Boosting – optimized, regularized boosting algorithm.</p><p><strong>Why?</strong> State-of-the-art for tabular data, handles missing values, fast training.</p><p><strong>Where?</strong> Fraud detection, Kaggle competitions, financial risk modeling.</p></div>
+            <div class="topic-card"><div class="topic-icon">🗳️</div><div class="badge">Ensemble</div><h3>Voting & Stacking</h3><p><strong>What?</strong> Combine multiple models: Voting (hard/soft), Stacking (meta-learner).</p><p><strong>Why?</strong> Reduces variance & bias, often outperforms single models.</p><p><strong>Where?</strong> High-stakes classification, model competitions.</p></div>
+            <div class="topic-card"><div class="topic-icon">⚙️</div><div class="badge">Optimization</div><h3>GridSearchCV</h3><p><strong>What?</strong> Exhaustive search over hyperparameter grid with cross-validation.</p><p><strong>Why?</strong> Automates tuning, prevents overfitting, finds optimal params.</p><p><strong>Where?</strong> Model selection, production-ready pipelines.</p></div>
+        </div>
+
+        <!-- XGBoost & Boosting Deep Dive -->
+        <div class="section-title">🚀 1. XGBoost – The Power of Boosting</div>
+        <div class="method-box">
+            <div class="method-header">🌳 Gradient Boosting with Regularization & Parallel Processing</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 Boosting concept</strong><p>Sequentially trains weak learners (trees), each correcting previous errors. XGBoost adds L1/L2 regularization, tree pruning, and handles missing values.</p></div>
+                <div class="detail-item"><strong>🎯 Why XGBoost excels</strong><p>Built-in cross-validation, early stopping, feature importance, GPU support. Often wins structured data competitions.</p></div>
+                <div class="detail-item"><strong>⚙️ Key hyperparameters</strong><p><code>n_estimators</code>, <code>max_depth</code>, <code>learning_rate</code>, <code>subsample</code>, <code>colsample_bytree</code>, <code>reg_alpha/lambda</code>.</p></div>
+            </div>
+            <div class="formula">📌 Objective: L(θ) = Σ loss(yᵢ, ŷᵢ) + Σ Ω(fₖ) where Ω penalizes tree complexity</div>
+            <pre>import xgboost as xgb
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score, classification_report
+
+# Synthetic fraud data (imbalanced)
+np.random.seed(42)
+X_syn = np.random.randn(5000, 10)
+y_syn = (X_syn[:,0] + X_syn[:,1]*0.5 + np.random.randn(5000)*0.3 > 0).astype(int)
+# Make imbalance: 5% fraud
+fraud_idx = np.where(y_syn == 1)[0]
+keep_idx = np.random.choice(fraud_idx, size=int(len(fraud_idx)*0.3), replace=False)
+y_syn[fraud_idx] = 0
+y_syn[keep_idx] = 1
+print(f"Fraud ratio: {y_syn.mean():.3f}")
+
+X_train, X_test, y_train, y_test = train_test_split(X_syn, y_syn, test_size=0.2, random_state=42, stratify=y_syn)
+
+# XGBoost basic
+xgb_model = xgb.XGBClassifier(n_estimators=100, learning_rate=0.1, max_depth=4, random_state=42, use_label_encoder=False, eval_metric='logloss')
+xgb_model.fit(X_train, y_train)
+y_pred_xgb = xgb_model.predict(X_test)
+y_proba_xgb = xgb_model.predict_proba(X_test)[:,1]
+print(f"XGBoost AUC: {roc_auc_score(y_test, y_proba_xgb):.4f}")</pre>
+        </div>
+
+        <!-- Voting & Stacking Ensemble -->
+        <div class="section-title">🗳️ 2. Voting Classifier & Stacking Ensemble</div>
+        <div class="method-box">
+            <div class="method-header">🤝 Combine multiple algorithms for better predictions</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Hard Voting</strong><p>Majority vote across classifiers. Simple, robust.</p></div>
+                <div class="detail-item"><strong>📈 Soft Voting</strong><p>Averages predicted probabilities. Often outperforms hard voting.</p></div>
+                <div class="detail-item"><strong>🏗️ Stacking</strong><p>Meta-learner trains on base model predictions. Can capture complex patterns.</p></div>
+            </div>
+            <pre>from sklearn.ensemble import VotingClassifier, StackingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+
+# Base models
+lr = LogisticRegression(random_state=42, max_iter=1000)
+dt = DecisionTreeClassifier(max_depth=5, random_state=42)
+rf = RandomForestClassifier(n_estimators=50, random_state=42)
+
+# Voting Classifier (soft)
+voting_clf = VotingClassifier(estimators=[('lr', lr), ('dt', dt), ('rf', rf)], voting='soft')
+voting_clf.fit(X_train, y_train)
+voting_proba = voting_clf.predict_proba(X_test)[:,1]
+print(f"Voting (soft) AUC: {roc_auc_score(y_test, voting_proba):.4f}")
+
+# Stacking with XGBoost as meta-learner
+base_models = [('lr', lr), ('dt', dt), ('rf', rf)]
+stacking_clf = StackingClassifier(estimators=base_models, final_estimator=xgb.XGBClassifier(n_estimators=50, use_label_encoder=False, eval_metric='logloss', random_state=42))
+stacking_clf.fit(X_train, y_train)
+stacking_proba = stacking_clf.predict_proba(X_test)[:,1]
+print(f"Stacking AUC: {roc_auc_score(y_test, stacking_proba):.4f}")</pre>
+            <div class="insight-box">💡 <strong>Ensemble insight:</strong> Stacking often gives 1-3% AUC lift over individual models. Voting is simpler and less prone to overfitting.</div>
+        </div>
+
+        <!-- Hyperparameter Tuning with GridSearchCV -->
+        <div class="section-title">⚙️ 3. GridSearchCV – Hyperparameter Tuning for XGBoost</div>
+        <div class="method-box">
+            <div class="method-header">🔍 Exhaustive search with cross-validation</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 What is GridSearchCV?</strong><p>Searches all combinations of hyperparameters, evaluates using k-fold CV, returns best estimator.</p></div>
+                <div class="detail-item"><strong>🎯 Why tune?</strong><p>Default parameters rarely optimal. Tuning can improve AUC by 2-5%.</p></div>
+                <div class="detail-item"><strong>⚠️ Caution</strong><p>Time-consuming for large grids. Use RandomizedSearchCV for large spaces.</p></div>
+            </div>
+            <pre>from sklearn.model_selection import GridSearchCV
+
+# Define parameter grid (reduced for speed)
+param_grid = {
+    'n_estimators': [50, 100],
+    'max_depth': [3, 5],
+    'learning_rate': [0.05, 0.1],
+    'subsample': [0.8, 1.0]
+}
+
+xgb_base = xgb.XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss')
+grid_search = GridSearchCV(xgb_base, param_grid, cv=3, scoring='roc_auc', n_jobs=-1, verbose=1)
+grid_search.fit(X_train, y_train)
+
+print(f"Best parameters: {grid_search.best_params_}")
+print(f"Best CV AUC: {grid_search.best_score_:.4f}")
+
+# Evaluate best model
+best_xgb = grid_search.best_estimator_
+y_proba_best = best_xgb.predict_proba(X_test)[:,1]
+print(f"Test AUC with tuned XGBoost: {roc_auc_score(y_test, y_proba_best):.4f}")</pre>
+        </div>
+
+        <!-- FULL FRAUD DETECTION EXAMPLE -->
+        <div class="section-title">💳 Credit Card Fraud Detection – Complete Pipeline</div>
+        <div class="method-box">
+            <div class="method-header">🏦 Real-world: Detect fraudulent transactions with ensemble & tuning</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Dataset simulation</strong><p>Features: transaction amount, time, V1-V28 (PCA components). Highly imbalanced (~0.17% fraud).</p></div>
+                <div class="detail-item"><strong>🎯 Business impact</strong><p>Catch fraud while minimizing false alarms. AUC and Precision-Recall critical.</p></div>
+                <div class="detail-item"><strong>🔧 Techniques used</strong><p>XGBoost with scale_pos_weight (handles imbalance), Voting Ensemble, GridSearchCV.</p></div>
+            </div>
+            <pre># Simulated credit card fraud dataset (realistic structure)
+np.random.seed(42)
+n_samples = 10000
+n_features = 20
+
+X_fraud = np.random.randn(n_samples, n_features)
+# Make fraud pattern: some features have different distribution
+fraud_indices = np.random.choice(n_samples, size=int(n_samples*0.005), replace=False)  # 0.5% fraud
+y_fraud = np.zeros(n_samples, dtype=int)
+y_fraud[fraud_indices] = 1
+# Alter features for fraud cases (make them distinguishable)
+for idx in fraud_indices:
+    X_fraud[idx, 2] += np.random.randn() * 2.5
+    X_fraud[idx, 5] += np.random.randn() * 2.0
+
+X_train_f, X_test_f, y_train_f, y_test_f = train_test_split(X_fraud, y_fraud, test_size=0.3, random_state=42, stratify=y_fraud)
+print(f"Fraud % in train: {y_train_f.mean()*100:.2f}%")
+
+# XGBoost with scale_pos_weight for imbalance
+fraud_ratio = y_train_f.mean()
+scale_pos_weight = (1 - fraud_ratio) / fraud_ratio
+xgb_fraud = xgb.XGBClassifier(n_estimators=100, max_depth=4, learning_rate=0.1, 
+                              scale_pos_weight=scale_pos_weight, random_state=42,
+                              use_label_encoder=False, eval_metric='logloss')
+xgb_fraud.fit(X_train_f, y_train_f)
+y_proba_fraud = xgb_fraud.predict_proba(X_test_f)[:,1]
+print(f"XGBoost Fraud AUC: {roc_auc_score(y_test_f, y_proba_fraud):.4f}")
+
+# Feature importance
+importance = xgb_fraud.feature_importances_
+top_features = np.argsort(importance)[-5:][::-1]
+print(f"Top 5 important features for fraud: {top_features}")</pre>
+            <div class="insight-box">⚠️ <strong>Fraud detection insight:</strong> XGBoost with scale_pos_weight handles class imbalance effectively. Ensemble methods (Voting/Stacking) provide additional robustness against concept drift.</div>
+        </div>
+
+        <!-- Ensemble Methods Visualization (SVG) -->
+        <div class="section-title">🖼️ Ensemble Methods Visual Comparison</div>
+        <div class="viz-svg">
+            <svg width="100%" height="260" viewBox="0 0 750 260" xmlns="http://www.w3.org/2000/svg">
+                <rect width="750" height="260" fill="#f8fafc" rx="12"/>
+                <text x="375" y="25" text-anchor="middle" font-size="12" fill="#2d6a4f" font-weight="bold">Ensemble Methods: How They Combine Base Models</text>
+                <!-- Bagging / Random Forest -->
+                <rect x="30" y="50" width="160" height="100" rx="8" fill="#d4edda" stroke="#2d6a4f" stroke-width="1.5"/>
+                <text x="110" y="75" text-anchor="middle" font-size="11" fill="#1b4d3a" font-weight="bold">Bagging</text>
+                <text x="110" y="95" text-anchor="middle" font-size="9" fill="#3a7b62">Random Forest</text>
+                <text x="110" y="115" text-anchor="middle" font-size="8" fill="#5a8f75">Parallel trees</text>
+                <text x="110" y="135" text-anchor="middle" font-size="8" fill="#5a8f75">Avg prediction</text>
+                <!-- Boosting / XGBoost -->
+                <rect x="230" y="50" width="160" height="100" rx="8" fill="#fff3cd" stroke="#e2a55e" stroke-width="1.5"/>
+                <text x="310" y="75" text-anchor="middle" font-size="11" fill="#8a6d3b" font-weight="bold">Boosting</text>
+                <text x="310" y="95" text-anchor="middle" font-size="9" fill="#b38f40">XGBoost / AdaBoost</text>
+                <text x="310" y="115" text-anchor="middle" font-size="8" fill="#b38f40">Sequential trees</text>
+                <text x="310" y="135" text-anchor="middle" font-size="8" fill="#b38f40">Correct errors</text>
+                <!-- Voting -->
+                <rect x="430" y="50" width="130" height="100" rx="8" fill="#d1ecf1" stroke="#2c7a9e" stroke-width="1.5"/>
+                <text x="495" y="75" text-anchor="middle" font-size="11" fill="#1c6a8a" font-weight="bold">Voting</text>
+                <text x="495" y="95" text-anchor="middle" font-size="9" fill="#3a8aaa">Majority vote</text>
+                <text x="495" y="115" text-anchor="middle" font-size="8" fill="#5a9aba">Soft/hard</text>
+                <!-- Stacking -->
+                <rect x="600" y="50" width="130" height="100" rx="8" fill="#e8d9f0" stroke="#7b4f9e" stroke-width="1.5"/>
+                <text x="665" y="75" text-anchor="middle" font-size="11" fill="#5a3a7a" font-weight="bold">Stacking</text>
+                <text x="665" y="95" text-anchor="middle" font-size="9" fill="#7a5a9a">Meta-learner</text>
+                <text x="665" y="115" text-anchor="middle" font-size="8" fill="#7a5a9a">Base models + blender</text>
+                <!-- Arrow flow -->
+                <text x="375" y="190" text-anchor="middle" font-size="10" fill="#4a6fa5">All ensemble methods typically outperform individual base models</text>
+                <text x="375" y="210" text-anchor="middle" font-size="9" fill="#6c8fb0">⏩ XGBoost + Voting + Stacking → best fraud detection AUC</text>
+            </svg>
+            <p style="font-size:0.8rem; margin-top:0.5rem;">⬆️ Ensemble strategies: Bagging (parallel), Boosting (sequential), Voting (majority), Stacking (meta-model).</p>
+        </div>
+
+        <!-- Comparison Table: Bagging vs Boosting vs Stacking -->
+        <div class="section-title">📊 Ensemble Methods Comparison</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefefe; border-radius: 16px;">
+                <thead style="background:#e2ecf5;"><tr><th style="padding:12px;">Method</th><th style="padding:12px;">How it works</th><th style="padding:12px;">Pros</th><th style="padding:12px;">Cons</th><th style="padding:12px;">When to use</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>XGBoost (Boosting)</strong></td><td>Sequential trees, each corrects prior errors</td><td>High accuracy, regularization, handles missing data</td><td>Prone to overfitting if not tuned</td><td>Fraud detection, regression, competitions</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Voting Classifier</strong></td><td>Aggregates predictions (hard/soft votes)</td><td>Simple, robust, reduces variance</td><td>Correlated models limit gains</td><td>Quick ensemble, diverse base models</td></tr>
+                    <tr><td style="padding:10px;"><strong>Stacking</strong></td><td>Meta-learner trains on base predictions</td><td>Can capture complex patterns, often highest AUC</td><td>Computationally expensive, risk overfitting</td><td>When top performance is critical (e.g., fraud)</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Advanced: Early Stopping & Cross-Validation with XGBoost -->
+        <div class="method-box">
+            <div class="method-header">🛑 Early Stopping & Validation Set</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>⚙️ What is early stopping?</strong><p>Halts training when validation metric stops improving. Prevents overfitting, saves time.</p></div>
+                <div class="detail-item"><strong>🎯 How to implement</strong><p>Pass <code>eval_set</code> and <code>early_stopping_rounds</code> to XGBoost.</p></div>
+            </div>
+            <pre># Early stopping example
+X_train_fs, X_val, y_train_fs, y_val = train_test_split(X_train_f, y_train_f, test_size=0.2, random_state=42)
+xgb_early = xgb.XGBClassifier(n_estimators=500, learning_rate=0.05, max_depth=4, random_state=42,
+                               use_label_encoder=False, eval_metric='logloss', early_stopping_rounds=20)
+xgb_early.fit(X_train_fs, y_train_fs, eval_set=[(X_val, y_val)], verbose=False)
+print(f"Best iteration: {xgb_early.best_iteration}")
+print(f"Validation AUC: {xgb_early.best_score:.4f}")</pre>
+        </div>
+
+        <!-- Where to use each ensemble method -->
+        <div class="two-col">
+            <div class="comp-card"><strong>🏦 Credit Card Fraud Detection</strong><br>✔ XGBoost with scale_pos_weight<br>✔ GridSearchCV for hyperparameter tuning<br>✔ Stacking with diverse base models (Logistic Regression + Random Forest + XGBoost) → best AUC</div>
+            <div class="comp-card"><strong>🎯 Business Recommendation</strong><br>For production: Use tuned XGBoost + Voting for speed. For maximum accuracy: Stacking ensemble. Monitor for concept drift.</div>
+        </div>
+
+        <div class="footer-note">
+            🌟 <strong>Day 8 Summary:</strong> XGBoost is a powerful boosting algorithm ideal for fraud detection. Voting and Stacking combine multiple models for even better performance. GridSearchCV automates hyperparameter tuning, and early stopping prevents overfitting. The credit card fraud pipeline demonstrates handling class imbalance, tuning, and ensemble evaluation.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #4f7ea3;">🧪 Try: Add RandomForest to stacking, compare AUC; use RandomizedSearchCV for larger parameter spaces.</div>
+    </div>
+</div>
+</body>
+</html>
