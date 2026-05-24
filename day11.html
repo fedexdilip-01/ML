@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 11: RNNs for Sequence Data | LSTMs, Vanishing Gradient, Time Series + Stock Price Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1f2b;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5f8a 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.7rem;
+            opacity: 0.92;
+            border-left: 3px solid #8bc9e6;
+            padding-left: 1rem;
+        }
+        .content {
+            padding: 2rem 2.5rem;
+        }
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+        .topic-card {
+            flex: 1;
+            background: #fafcfe;
+            border-radius: 1.5rem;
+            padding: 1.3rem 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 28px -12px rgba(0,0,0,0.1);
+        }
+        .topic-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .topic-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; color: #2c5f8a; }
+        .badge {
+            background: #e8f0f8;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.5rem 0 0.7rem;
+            color: #2c5f8a;
+        }
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #2c5f8a;
+            padding-left: 1rem;
+            color: #1e3a5f;
+        }
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e2eaf0;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .method-header {
+            background: #eef3fa;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: monospace;
+            border-bottom: 1px solid #dee6ef;
+            color: #2c5f8a;
+        }
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 170px;
+        }
+        .detail-item strong {
+            font-weight: 700;
+            color: #3a7b9e;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        code {
+            background: #edf4f9;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #2c5f8a;
+        }
+        pre {
+            background: #121e2c;
+            color: #e2f0ff;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+        .insight-box {
+            background: #fef7e8;
+            border-left: 4px solid #e2a55e;
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+        .formula {
+            background: #eef3f7;
+            padding: 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: monospace;
+            margin: 0.8rem 0;
+        }
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .comp-card {
+            background: #fafcfe;
+            border-radius: 1rem;
+            padding: 1rem;
+            flex: 1;
+            border: 1px solid #e2eef5;
+        }
+        .viz-svg {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        hr { margin: 2rem 0; border: none; height: 1px; background: linear-gradient(to right, #d0e0ec, transparent);}
+        .footer-note {
+            background: #edf4fa;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>📈 Day 11 – RNNs for Sequence Data</h1>
+        <div class="sub">LSTMs, Vanishing Gradient Problem, Time Series Forecasting | Stock Price Prediction with LSTM</div>
+    </div>
+    <div class="content">
+        <!-- Core concepts -->
+        <div class="topic-grid">
+            <div class="topic-card"><div class="topic-icon">🔄</div><div class="badge">Recurrent</div><h3>RNN</h3><p><strong>What?</strong> Neural network with loops: hidden state persists across time steps.</p><p><strong>Why?</strong> Processes sequences of variable length (text, audio, time series).</p><p><strong>Where?</strong> Language modeling, speech recognition, time series forecasting.</p></div>
+            <div class="topic-card"><div class="topic-icon">🧠</div><div class="badge">Memory Cell</div><h3>LSTM</h3><p><strong>What?</strong> Gated RNN with forget, input, output gates – controls information flow.</p><p><strong>Why?</strong> Solves vanishing gradient problem, remembers long-term dependencies.</p><p><strong>Where?</strong> Stock prediction, text generation, machine translation.</p></div>
+            <div class="topic-card"><div class="topic-icon">⚠️</div><div class="badge">Challenge</div><h3>Vanishing Gradient</h3><p><strong>What?</strong> Gradients become exponentially small in deep RNNs.</p><p><strong>Why?</strong> Standard RNNs can't learn long-range dependencies (>10 steps).</p><p><strong>Where?</strong> Solved by LSTMs/GRUs with gating mechanisms.</p></div>
+        </div>
+
+        <!-- Vanishing Gradient Problem -->
+        <div class="section-title">⚠️ 1. Vanishing Gradient Problem – Why RNNs Failed Initially</div>
+        <div class="method-box">
+            <div class="method-header">📉 Gradients shrink exponentially during backpropagation through time</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 The problem</strong><p>For standard RNN, hidden state gradient is product of many weight matrices. If eigenvalues < 1, gradient → 0.</p></div>
+                <div class="detail-item"><strong>🧠 Consequence</strong><p>Model can't learn dependencies beyond ~10 time steps. Early words in sentence don't affect later predictions.</p></div>
+                <div class="detail-item"><strong>⚙️ Solutions</strong><p>LSTM/GRU (gates), gradient clipping, ReLU activation, residual connections.</p></div>
+            </div>
+            <div class="formula">📌 Standard RNN: hₜ = tanh(Wₕₕ·hₜ₋₁ + Wₓₕ·xₜ + b) → ∂hₜ/∂hₜ₋₁ = Wₕₕᵀ diag(tanh')</div>
+            <div class="insight-box">💡 <strong>Key insight:</strong> Vanishing gradient is why you need LSTMs for stock prediction – stock prices depend on patterns from weeks or months ago.</div>
+        </div>
+
+        <!-- LSTM Architecture -->
+        <div class="section-title">🧠 2. LSTM – Long Short-Term Memory</div>
+        <div class="method-box">
+            <div class="method-header">🚪 Three gates: Forget, Input, Output – controlled memory cell</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🔐 Forget Gate</strong><p>σ(W_f·[hₜ₋₁, xₜ] + b_f) – decides what to discard from cell state.</p></div>
+                <div class="detail-item"><strong>📝 Input Gate</strong><p>σ(W_i·[hₜ₋₁, xₜ] + b_i) – decides what new info to store.</p></div>
+                <div class="detail-item"><strong>📤 Output Gate</strong><p>σ(W_o·[hₜ₋₁, xₜ] + b_o) – decides what to output based on cell state.</p></div>
+            </div>
+            <div class="viz-svg">
+                <svg width="100%" height="200" viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="900" height="200" fill="#f8fafc" rx="8"/>
+                    <text x="450" y="18" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold">LSTM Cell – Gated Memory</text>
+                    <!-- Cell state line (top) -->
+                    <line x1="60" y1="60" x2="840" y2="60" stroke="#2c5f8a" stroke-width="2"/>
+                    <text x="450" y="50" text-anchor="middle" font-size="9" fill="#2c5f8a">Cell State (Cₜ) – Long-term memory</text>
+                    <!-- Three gates -->
+                    <rect x="80" y="80" width="100" height="50" fill="#e63946" stroke="#c1272d" stroke-width="1.5" rx="5"/>
+                    <text x="130" y="105" text-anchor="middle" font-size="10" fill="white">Forget Gate</text>
+                    <text x="130" y="120" text-anchor="middle" font-size="8" fill="white">σ</text>
+                    
+                    <rect x="320" y="80" width="100" height="50" fill="#2e9c4a" stroke="#1f6e3a" stroke-width="1.5" rx="5"/>
+                    <text x="370" y="105" text-anchor="middle" font-size="10" fill="white">Input Gate</text>
+                    <text x="370" y="120" text-anchor="middle" font-size="8" fill="white">σ</text>
+                    
+                    <rect x="580" y="80" width="100" height="50" fill="#f4a261" stroke="#e2a55e" stroke-width="1.5" rx="5"/>
+                    <text x="630" y="105" text-anchor="middle" font-size="10" fill="white">Output Gate</text>
+                    <text x="630" y="120" text-anchor="middle" font-size="8" fill="white">σ</text>
+                    
+                    <!-- Input connections -->
+                    <text x="50" y="160" text-anchor="middle" font-size="9" fill="#2c5f8a">hₜ₋₁, xₜ</text>
+                    <line x1="130" y1="80" x2="130" y2="160" stroke="#aaa" stroke-dasharray="3,3"/>
+                    <line x1="370" y1="80" x2="370" y2="160" stroke="#aaa" stroke-dasharray="3,3"/>
+                    <line x1="630" y1="80" x2="630" y2="160" stroke="#aaa" stroke-dasharray="3,3"/>
+                    
+                    <!-- Output -->
+                    <text x="800" y="105" font-size="10" fill="#2c5f8a">→ hₜ</text>
+                    <defs>
+                        <marker id="arrowLSTM" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="#2c5f8a"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <p style="font-size:0.75rem; margin-top:0.3rem;">LSTM gates control information flow: forget irrelevant, store important, output based on memory</p>
+            </div>
+            <pre>import tensorflow as tf
+from tensorflow.keras import layers
+
+# LSTM layer in Keras
+lstm_layer = layers.LSTM(units=64, return_sequences=True, input_shape=(timesteps, features))
+# For stock prediction: timesteps=60 days of historical prices</pre>
+        </div>
+
+        <!-- Time Series Preparation -->
+        <div class="section-title">📊 3. Time Series Data Preparation for LSTMs</div>
+        <div class="method-box">
+            <div class="method-header">🔄 Sliding window: Create sequences from past data</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 Window approach</strong><p>Use last N days to predict next day. X = [t-N...t-1], y = [t].</p></div>
+                <div class="detail-item"><strong>🎯 Why normalization?</strong><p>Scale prices to [0,1] or standardize for faster convergence.</p></div>
+                <div class="detail-item"><strong>⚙️ Train/val/test split</strong><p>Chronological order! Never shuffle time series.</p></div>
+            </div>
+            <pre>import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+
+def create_sequences(data, window_size):
+    X, y = [], []
+    for i in range(len(data) - window_size):
+        X.append(data[i:i+window_size])
+        y.append(data[i+window_size])
+    return np.array(X), np.array(y)
+
+# Example with synthetic prices
+prices = np.sin(np.linspace(0, 100, 500)) + np.random.randn(500)*0.1
+scaler = MinMaxScaler()
+prices_scaled = scaler.fit_transform(prices.reshape(-1,1))
+
+window = 60  # use 60 days of history
+X, y = create_sequences(prices_scaled, window)
+print(f"X shape: {X.shape}, y shape: {y.shape}")  # (440, 60, 1), (440,)</pre>
+            <div class="insight-box">📌 <strong>Critical:</strong> Split time series chronologically: train first 70%, validate next 15%, test last 15%. No random shuffle!</div>
+        </div>
+
+        <!-- FULL EXAMPLE: Stock Price Prediction with LSTM -->
+        <div class="section-title">📈 Stock Price Prediction – Complete LSTM Model</div>
+        <div class="method-box">
+            <div class="method-header">🏦 Predict next day's closing price using historical data (60-day window)</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Dataset</strong><p>Historical stock prices (simulated/real). Features: Close price (univariate).</p></div>
+                <div class="detail-item"><strong>🎯 Architecture</strong><p>LSTM(50, return_sequences=True) → LSTM(50) → Dense(25) → Dense(1).</p></div>
+                <div class="detail-item"><strong>⚙️ Training</strong><p>Adam optimizer, MSE loss, early stopping, 50 epochs.</p></div>
+            </div>
+            <pre>import tensorflow as tf
+from tensorflow.keras import layers, models, callbacks
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Generate realistic stock-like data (trend + seasonality + noise)
+np.random.seed(42)
+days = 2000
+trend = np.linspace(100, 150, days)
+seasonal = 10 * np.sin(2 * np.pi * np.arange(days) / 50)
+noise = np.random.randn(days) * 3
+prices = trend + seasonal + noise
+prices = prices + 50  # base price
+
+# Normalize
+scaler = MinMaxScaler()
+prices_scaled = scaler.fit_transform(prices.reshape(-1, 1)).flatten()
+
+# Create sequences
+window_size = 60
+X, y = [], []
+for i in range(len(prices_scaled) - window_size):
+    X.append(prices_scaled[i:i+window_size])
+    y.append(prices_scaled[i+window_size])
+X = np.array(X).reshape(-1, window_size, 1)
+y = np.array(y)
+
+# Chronological split (70% train, 15% val, 15% test)
+train_size = int(len(X) * 0.7)
+val_size = int(len(X) * 0.15)
+X_train = X[:train_size]
+y_train = y[:train_size]
+X_val = X[train_size:train_size+val_size]
+y_val = y[train_size:train_size+val_size]
+X_test = X[train_size+val_size:]
+y_test = y[train_size+val_size:]
+
+print(f"Train: {X_train.shape}, Val: {X_val.shape}, Test: {X_test.shape}")
+
+# Build LSTM Model
+model = models.Sequential([
+    layers.LSTM(50, return_sequences=True, input_shape=(window_size, 1)),
+    layers.Dropout(0.2),
+    layers.LSTM(50, return_sequences=False),
+    layers.Dropout(0.2),
+    layers.Dense(25, activation='relu'),
+    layers.Dense(1)
+])
+
+model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+model.summary()
+
+# Early stopping
+early_stop = callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+# Train
+history = model.fit(X_train, y_train,
+                    validation_data=(X_val, y_val),
+                    epochs=50,
+                    batch_size=32,
+                    callbacks=[early_stop],
+                    verbose=1)
+
+# Evaluate
+test_loss, test_mae = model.evaluate(X_test, y_test, verbose=0)
+print(f"\n✅ Test MAE: {test_mae:.4f} (scaled)")
+print(f"   Actual price MAE: ~${test_mae * (prices.max() - prices.min()):.2f}")
+
+# Plot predictions
+y_pred = model.predict(X_test)
+y_pred_inv = scaler.inverse_transform(y_pred)
+y_test_inv = scaler.inverse_transform(y_test.reshape(-1, 1))
+
+plt.figure(figsize=(14, 6))
+plt.plot(y_test_inv, label='Actual Prices', color='blue', alpha=0.7)
+plt.plot(y_pred_inv, label='LSTM Predictions', color='red', alpha=0.7)
+plt.xlabel('Time Step')
+plt.ylabel('Stock Price ($)')
+plt.title('LSTM Stock Price Prediction - Test Set')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()
+
+# Training curves
+plt.figure(figsize=(12,4))
+plt.subplot(1,2,1)
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Val Loss')
+plt.xlabel('Epoch'); plt.ylabel('MSE'); plt.legend(); plt.title('Loss Curves')
+plt.subplot(1,2,2)
+plt.plot(history.history['mae'], label='Train MAE')
+plt.plot(history.history['val_mae'], label='Val MAE')
+plt.xlabel('Epoch'); plt.ylabel('MAE'); plt.legend(); plt.title('MAE Curves')
+plt.tight_layout()
+plt.show()</pre>
+            <div class="insight-box">📊 <strong>Expected results:</strong> LSTM captures trends and seasonality. Test MAE typically 2-5% of price range. On real stock data, LSTMs often outperform ARIMA for non-linear patterns.</div>
+        </div>
+
+        <!-- Multi-step Forecasting -->
+        <div class="method-box">
+            <div class="method-header">🔮 Multi-Step Forecasting – Predict Next 30 Days</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 Recursive method</strong><p>Use predictions as inputs for next time steps. Can accumulate error.</p></div>
+                <div class="detail-item"><strong>🎯 Direct method</strong><p>Train model to predict multiple steps at once (output shape = horizon).</p></div>
+            </div>
+            <pre>def predict_future(model, last_sequence, steps, scaler):
+    future = []
+    current_seq = last_sequence.copy()
+    for _ in range(steps):
+        pred = model.predict(current_seq.reshape(1, window_size, 1), verbose=0)[0,0]
+        future.append(pred)
+        current_seq = np.append(current_seq[1:], pred)
+    return scaler.inverse_transform(np.array(future).reshape(-1, 1))
+
+# Predict next 30 days
+last_60 = X_test[-1]  # last sequence from test set
+future_prices = predict_future(model, last_60, 30, scaler)
+
+plt.figure(figsize=(10,5))
+plt.plot(range(30), future_prices, marker='o', label='Predicted Future Prices')
+plt.xlabel('Days ahead'); plt.ylabel('Price ($)'); plt.title('30-Day Stock Price Forecast')
+plt.legend(); plt.grid(alpha=0.3)
+plt.show()</pre>
+        </div>
+
+        <!-- RNN vs LSTM vs GRU Comparison -->
+        <div class="section-title">📊 RNN Architectures Comparison</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefefe; border-radius: 16px;">
+                <thead style="background:#e2ecf5;"><tr><th style="padding:12px;">Architecture</th><th style="padding:12px;">Memory</th><th style="padding:12px;">Gates</th><th style="padding:12px;">Long-term dependency</th><th style="padding:12px;">Use case</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Vanilla RNN</strong></td><td style="padding:10px;">Short (~10 steps)</td><td style="padding:10px;">None</td><td style="padding:10px;">❌ Poor</td><td style="padding:10px;">Simple sequences</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>LSTM</strong></td><td style="padding:10px;">Long (~1000+ steps)</td><td style="padding:10px;">3 (forget, input, output)</td><td style="padding:10px;">✅ Excellent</td><td style="padding:10px;">Stock prediction, NLP, speech</td></tr>
+                    <tr><td style="padding:10px;"><strong>GRU</strong></td><td style="padding:10px;">Long</td><td style="padding:10px;">2 (update, reset)</td><td style="padding:10px;">✅ Very good</td><td style="padding:10px;">Faster than LSTM, slightly less capacity</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Real-world Considerations -->
+        <div class="two-col">
+            <div class="comp-card"><strong>📈 Financial Markets</strong><br>• Stock prices are noisy, non-stationary<br>• Add external features (volume, sentiment)<br>• Use walk-forward validation<br>• Never assume perfect prediction</div>
+            <div class="comp-card"><strong>🛠️ Best Practices</strong><br>• Stack multiple LSTM layers<br>• Use bidirectional LSTM for context<br>• Gradient clipping (clipnorm=1.0)<br>• Learning rate scheduling</div>
+        </div>
+
+        <!-- LSTM with Multiple Features -->
+        <div class="method-box">
+            <div class="method-header">📊 Multi-variate Time Series – Add Volume, Sentiment, etc.</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 Input shape</strong><p>(batch, timesteps, features) where features > 1.</p></div>
+                <div class="detail-item"><strong>🎯 Example features</strong><p>Close price, Volume, Moving averages, Sentiment score.</p></div>
+            </div>
+            <pre># Multi-feature LSTM
+num_features = 3  # e.g., price, volume, sentiment
+X_multi = np.random.randn(1000, 60, num_features)  # dummy
+y_multi = np.random.randn(1000)
+
+model_multi = models.Sequential([
+    layers.LSTM(64, return_sequences=True, input_shape=(60, num_features)),
+    layers.LSTM(32),
+    layers.Dense(16, activation='relu'),
+    layers.Dense(1)
+])
+model_multi.compile(optimizer='adam', loss='mse')
+print("Multi-feature LSTM ready for richer predictions")</pre>
+        </div>
+
+        <div class="footer-note">
+            🌟 <strong>Day 11 Summary:</strong> RNNs process sequences but suffer from vanishing gradients. LSTMs solve this with gated memory cells, enabling long-term dependency learning. The stock price prediction example demonstrates end-to-end time series forecasting: create sliding windows, normalize data, build stacked LSTM, and evaluate on chronological test sets. Key insights: LSTMs capture trends, seasonality, and complex patterns better than traditional ARIMA for non-linear data.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #4f7ea3;">🧪 Try: Add more LSTM layers, change window size (30/90 days), or add technical indicators (RSI, MACD) as features!</div>
+    </div>
+</div>
+</body>
+</html>
