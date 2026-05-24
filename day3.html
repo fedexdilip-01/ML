@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 3: Linear Regression - MSE, Gradient Descent, Assumptions | House Price Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f4f8;
+            color: #0a1c2a;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #1a3c34 0%, #2d6a4f 100%);
+            padding: 2.5rem 2.8rem;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero .sub {
+            font-size: 1rem;
+            opacity: 0.92;
+            border-left: 3px solid #a7e0b0;
+            padding-left: 1rem;
+            margin-top: 0.5rem;
+            max-width: 85%;
+        }
+
+        .content {
+            padding: 2rem 2.5rem;
+        }
+
+        /* Three core topics */
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .topic-card {
+            flex: 1;
+            background: #fafefc;
+            border-radius: 1.5rem;
+            padding: 1.3rem 1.5rem;
+            border: 1px solid #d4e6de;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        .topic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 18px 30px -12px rgba(0,0,0,0.12);
+            border-color: #8bc2a8;
+        }
+
+        .topic-icon {
+            font-size: 2rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .topic-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e5631;
+            margin-bottom: 0.4rem;
+        }
+
+        .badge {
+            background: #e2f0e8;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 0.8rem;
+            color: #1e5631;
+        }
+
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #2d6a4f;
+            padding-left: 1rem;
+            color: #143d2c;
+        }
+
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e2efe8;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+
+        .method-header {
+            background: #eef6f1;
+            padding: 1rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            font-family: monospace;
+            border-bottom: 1px solid #d0e2d8;
+            color: #1b4d3a;
+        }
+
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .detail-item {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .detail-item strong {
+            font-weight: 700;
+            color: #216e4b;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        code {
+            background: #edf3f0;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #1f543e;
+        }
+
+        pre {
+            background: #0f241d;
+            color: #daf4e5;
+            padding: 1.2rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.83rem;
+            font-family: monospace;
+            margin: 1rem 0;
+            line-height: 1.45;
+        }
+
+        .insight-box {
+            background: #fef9e6;
+            border-left: 4px solid #e9b35f;
+            padding: 0.8rem 1.3rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+
+        .formula {
+            background: #eef2fa;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 1rem;
+            text-align: center;
+            margin: 0.8rem 0;
+        }
+
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .col-card {
+            flex: 1;
+            background: #fafefb;
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid #d3e6dc;
+        }
+
+        hr {
+            margin: 2rem 0;
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, #c8ddd2, transparent);
+        }
+
+        .footer-note {
+            background: #eef3f0;
+            border-radius: 1.2rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+            color: #2b6e4e;
+        }
+
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+            .hero { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>🏠 Day 3 – Linear Regression: MSE, Gradient Descent & Assumptions</h1>
+        <div class="sub">🎯 Predict house prices with Boston-style dataset • Understand core concepts & real implementation with Scikit-learn</div>
+    </div>
+    <div class="content">
+        <!-- Overview cards: MSE, GD, Assumptions -->
+        <div class="topic-grid">
+            <div class="topic-card">
+                <div class="topic-icon">📉</div>
+                <div class="badge">Loss Function</div>
+                <h3>Mean Squared Error (MSE)</h3>
+                <p><strong>What?</strong> Average squared difference between actual & predicted values. $MSE = \frac{1}{n}\sum(y_i - \hat{y}_i)^2$</p>
+                <p><strong>Why?</strong> Penalizes large errors heavily, differentiable → ideal for gradient-based optimization.</p>
+                <p><strong>Where?</strong> Regression tasks, model evaluation, training objective for OLS & GD.</p>
+            </div>
+            <div class="topic-card">
+                <div class="topic-icon">⛰️</div>
+                <div class="badge">Optimization</div>
+                <h3>Gradient Descent</h3>
+                <p><strong>What?</strong> Iterative algorithm to minimize cost function by updating parameters in opposite direction of gradient.</p>
+                <p><strong>Why?</strong> Scales to large datasets (batch/SGD), works when normal equation is infeasible.</p>
+                <p><strong>Where?</strong> Neural nets, linear regression with millions of features, online learning.</p>
+            </div>
+            <div class="topic-card">
+                <div class="topic-icon">📐</div>
+                <div class="badge">Model Validity</div>
+                <h3>Regression Assumptions</h3>
+                <p><strong>What?</strong> Linearity, independence, homoscedasticity, normality of errors, no multicollinearity.</p>
+                <p><strong>Why?</strong> Ensure unbiased coefficients, reliable hypothesis tests, prediction intervals.</p>
+                <p><strong>Where?</strong> Diagnostic plots (residuals), feature engineering, model selection.</p>
+            </div>
+        </div>
+
+        <!-- Section: MSE deep dive -->
+        <div class="section-title">📐 1. Mean Squared Error (MSE) – The Heart of Regression</div>
+        <div class="method-box">
+            <div class="method-header">🎯 Why MSE is the default loss for Linear Regression</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🔢 Mathematical definition</strong><p>MSE = (1/n) Σ (yᵢ – ŷᵢ)². It's convex, smooth, and corresponds to Maximum Likelihood under Gaussian errors.</p></div>
+                <div class="detail-item"><strong>⚡ What it measures</strong><p>Quadratic penalty: large errors are magnified → model focuses on outliers. Useful when outliers are rare.</p></div>
+                <div class="detail-item"><strong>🧠 Why not MAE?</strong><p>MSE differentiable everywhere, leads to closed-form OLS solution. In gradient descent, derivative = 2*(error).</p></div>
+            </div>
+            <div class="formula">📌 Gradient of MSE w.r.t weights: ∇MSE = - (2/n) Xᵀ (y - Xw)</div>
+            <pre># Manual MSE calculation example
+import numpy as np
+from sklearn.metrics import mean_squared_error
+
+y_true = np.array([300, 450, 510, 620])
+y_pred = np.array([280, 470, 530, 600])
+mse_manual = np.mean((y_true - y_pred) ** 2)
+mse_sklearn = mean_squared_error(y_true, y_pred)
+print(f"MSE: {mse_manual:.2f} (sklearn: {mse_sklearn:.2f})")
+# Output: MSE: 425.00 -> penalizes 30K error squared</pre>
+        </div>
+
+        <!-- Gradient Descent Explanation -->
+        <div class="section-title">⚙️ 2. Gradient Descent – How Linear Regression Learns</div>
+        <div class="method-box">
+            <div class="method-header">🔄 Batch Gradient Descent from Scratch + sklearn</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🧠 What/How</strong><p>Start with random weights, compute gradient, update: w := w - α * ∇MSE. Learning rate α controls step size.</p></div>
+                <div class="detail-item"><strong>🎯 Why GD?</strong><p>Closed-form OLS (normal equation) requires O(n³) time. GD works for large n, online learning, & sparse data.</p></div>
+                <div class="detail-item"><strong>📍 Where used</strong><p>Linear regression with >10k features, neural networks, logistic regression, deep learning backpropagation.</p></div>
+            </div>
+            <pre># Simple batch gradient descent for house price example
+import numpy as np
+from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import StandardScaler
+
+# Load California housing (alternative to Boston)
+housing = fetch_california_housing()
+X = housing.data[:, :3]  # MedInc, HouseAge, AveRooms for simplicity
+y = housing.target
+
+# Normalize features for better convergence
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+X_b = np.c_[np.ones((X_scaled.shape[0], 1)), X_scaled]  # add bias
+
+# Gradient descent parameters
+lr = 0.1
+n_iterations = 500
+n_samples = X_b.shape[0]
+theta = np.random.randn(X_b.shape[1], 1)
+
+for iteration in range(n_iterations):
+    gradients = 2/n_samples * X_b.T.dot(X_b.dot(theta) - y.reshape(-1,1))
+    theta = theta - lr * gradients
+
+print(f"Trained coefficients via GD: {theta.flatten()}")
+print("Compare with sklearn LinearRegression (normal eq) later")</pre>
+            <div class="insight-box">💡 <strong>Practical tip:</strong> Feature scaling (StandardScaler) is critical for gradient descent to converge faster. Without scaling, loss landscape is elongated, causing zig-zag updates.</div>
+        </div>
+
+        <!-- Assumptions of Linear Regression -->
+        <div class="section-title">🔍 3. Key Assumptions & Diagnostic Checks</div>
+        <div class="two-col">
+            <div class="col-card"><strong>✅ Linearity</strong><br>Relationship between features & target is linear. Check with residual plots (actual vs predicted).</div>
+            <div class="col-card"><strong>✅ Independence</strong><br>Observations independent (no time series autocorrelation without adjustment).</div>
+            <div class="col-card"><strong>✅ Homoscedasticity</strong><br>Constant variance of residuals. If heteroscedastic, use weighted regression.</div>
+            <div class="col-card"><strong>✅ Normality of errors</strong><br>Residuals ~ N(0, σ²) for valid confidence intervals. Robust for large n.</div>
+            <div class="col-card"><strong>✅ No multicollinearity</strong><br>Features not highly correlated. Check VIF (Variance Inflation Factor).</div>
+        </div>
+
+        <!-- Practical: Boston / California Housing with LinearRegression -->
+        <div class="section-title">🏡 Full Example: House Price Prediction (California Housing)</div>
+        <div class="method-box">
+            <div class="method-header">🚀 Using sklearn.linear_model.LinearRegression – OLS Solution</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📦 What we build</strong><p>Multiple linear regression to predict median house value based on MedInc, HouseAge, AveRooms, latitude, longitude.</p></div>
+                <div class="detail-item"><strong>🎯 Why this dataset?</strong><p>Real-world regression problem; classic benchmark. Evaluate R², MSE, and check assumptions.</p></div>
+                <div class="detail-item"><strong>🛠️ Where this applies</strong><p>Real estate valuation, demand forecasting, economic modeling, baseline for any continuous target.</p></div>
+            </div>
+            <pre>from sklearn.datasets import fetch_california_housing
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import pandas as pd
+
+# Load data & create DataFrame
+housing = fetch_california_housing()
+df = pd.DataFrame(housing.data, columns=housing.feature_names)
+df['MedHouseVal'] = housing.target
+
+print("Dataset shape:", df.shape)
+print("Features:", housing.feature_names)
+
+# Train-test split
+X = df.drop('MedHouseVal', axis=1)
+y = df['MedHouseVal']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train linear regression
+lr = LinearRegression()
+lr.fit(X_train, y_train)
+y_pred = lr.predict(X_test)
+
+# Evaluation
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Linear Regression Performance:")
+print(f"MSE: {mse:.4f} | RMSE: {rmse:.4f} (in $100,000 units)")
+print(f"R² Score: {r2:.4f}")
+print(f"Coefficients: {dict(zip(housing.feature_names, lr.coef_))}")
+
+# Interpretation: MedInc coefficient ~0.44 -> 1 unit increase in median income raises price by 0.44 * 100k$</pre>
+            <div class="insight-box">📌 <strong>Interpretation:</strong> R² ~0.6 indicates 60% variance explained. RMSE around 0.73 means typical prediction error ~$73,000. Features 'MedInc' (median income) has strongest positive impact.</div>
+        </div>
+
+        <!-- Gradient Descent vs Normal Equation + assumptions test -->
+        <div class="method-box">
+            <div class="method-header">🧪 Check Assumptions: Residual Analysis & Multicollinearity</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 What we analyze</strong><p>Plot residuals vs fitted values (homoscedasticity), Q-Q plot for normality, compute VIF for multicollinearity.</p></div>
+                <div class="detail-item"><strong>🎯 Why it matters</strong><p>Violating assumptions might lead to biased standard errors, unreliable p-values, but predictions can still be good.</p></div>
+                <div class="detail-item"><strong>🔧 Where to fix</strong><p>Transformations (log, polynomial features), robust standard errors, or switch to tree-based models.</p></div>
+            </div>
+            <pre>import matplotlib.pyplot as plt
+import scipy.stats as stats
+
+# Residuals
+residuals = y_test - y_pred
+
+# 1. Residuals vs Predicted (check homoscedasticity)
+plt.figure(figsize=(12,4))
+plt.subplot(1,2,1)
+plt.scatter(y_pred, residuals, alpha=0.5)
+plt.axhline(y=0, color='red', linestyle='--')
+plt.xlabel('Predicted Values')
+plt.ylabel('Residuals')
+plt.title('Residuals vs Fitted (Homoscedasticity check)')
+
+# 2. Q-Q plot for normality
+plt.subplot(1,2,2)
+stats.probplot(residuals, dist="norm", plot=plt)
+plt.title('Q-Q Plot (Normality of Errors)')
+plt.tight_layout()
+plt.show()
+
+# Variance Inflation Factor (multicollinearity) – example with statsmodels
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+X_with_const = X.assign(const=1)
+vif_data = pd.DataFrame()
+vif_data["feature"] = X_with_const.columns
+vif_data["VIF"] = [variance_inflation_factor(X_with_const.values, i) for i in range(X_with_const.shape[1])]
+print("VIF values ( >5-10 indicates high multicollinearity):")
+print(vif_data)
+</pre>
+        </div>
+
+        <!-- Comparison: Gradient Descent vs OLS -->
+        <div class="section-title">⚖️ Gradient Descent vs Normal Equation (sklearn)</div>
+        <div class="two-col">
+            <div class="col-card"><strong>📐 Normal Equation (Closed-form)</strong><br>w = (XᵀX)⁻¹ Xᵀy<br>✓ Exact solution, no learning rate.<br>✗ O(n³) time, memory heavy for n>10k.</div>
+            <div class="col-card"><strong>🔄 Gradient Descent (Iterative)</strong><br>w := w - α ∇MSE<br>✓ Scales to large datasets (online, batch).<br>✗ Requires tuning α & iterations.</div>
+        </div>
+        <pre># Comparing both: sklearn uses SVD-based solution (efficient normal eq)
+from sklearn.linear_model import SGDRegressor
+
+# Using SGDRegressor (stochastic gradient descent)
+sgd = SGDRegressor(max_iter=1000, tol=1e-3, learning_rate='optimal', random_state=42)
+sgd.fit(X_train, y_train)
+y_pred_sgd = sgd.predict(X_test)
+mse_sgd = mean_squared_error(y_test, y_pred_sgd)
+print(f"SGD MSE: {mse_sgd:.4f} vs OLS MSE: {mse:.4f} → comparable after convergence.")</pre>
+
+        <!-- What / Why / Where summary table -->
+        <div class="section-title">📋 Quick Reference: Linear Regression Core Concepts</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefef9; border-radius: 20px;">
+                <thead style="background:#cde0d6;">
+                    <tr><th style="padding:12px; text-align:left;">Concept</th><th style="padding:12px; text-align:left;">What (definition)</th><th style="padding:12px; text-align:left;">Why (ML importance)</th><th style="padding:12px; text-align:left;">Where (use case)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #dfece4;"><strong>MSE</strong></td><td>Mean squared error loss</td><td>Convex, differentiable, penalizes outliers</td><td>Regression objective, model selection</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #dfece4;"><strong>Gradient Descent</strong></td><td>Iterative optimization using gradients</td><td>Efficient for large data, online learning</td><td>Linear regression, neural nets, deep learning</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #dfece4;"><strong>Linearity Assumption</strong></td><td>Linear relationship between X and y</td><td>Ensures unbiased coefficient estimates</td><td>Feature engineering, adding polynomials</td></tr>
+                    <tr><td style="padding:10px;"><strong>Homoscedasticity</strong></td><td>Constant variance of residuals</td><td>Valid standard errors & hypothesis tests</td><td>Check residual plots, use weighted least squares</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Real-world considerations -->
+        <div class="method-box">
+            <div class="method-header">🧠 Beyond Basics: Regularization & Feature Engineering</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>Ridge/Lasso (Week 2)</strong><p>Extend linear regression with L2/L1 penalties to handle multicollinearity & feature selection.</p></div>
+                <div class="detail-item"><strong>Polynomial features</strong><p>Capture non-linear relationships by adding squared/interaction terms while keeping linear in parameters.</p></div>
+                <div class="detail-item"><strong>When assumptions fail</strong><p>Consider tree-based models (Random Forest, XGBoost) or robust regression.</p></div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            📈 <strong>Key Takeaway:</strong> Linear Regression is the cornerstone of supervised learning. MSE drives optimization, Gradient Descent makes it scalable, and Assumptions guide proper application. The house price example demonstrates complete workflow – from training to residual diagnostics.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #3c6e5a;">
+            🧪 Experiment: Add polynomial features (MedInc²) and see if R² improves → explore non-linearity in housing data.
+        </div>
+    </div>
+</div>
+</body>
+</html>
