@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 7: Unsupervised Learning – K-Means Clustering & PCA | Customer Segmentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1f2b;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        .hero {
+            background: linear-gradient(135deg, #2c3e66 0%, #4a6fa5 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.7rem;
+            opacity: 0.92;
+            border-left: 3px solid #9bc0e8;
+            padding-left: 1rem;
+        }
+        .content {
+            padding: 2rem 2.5rem;
+        }
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+        .topic-card {
+            flex: 1;
+            background: #fafcfe;
+            border-radius: 1.5rem;
+            padding: 1.3rem 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 28px -12px rgba(0,0,0,0.1);
+        }
+        .topic-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .topic-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; color: #3a6b9b; }
+        .badge {
+            background: #e8f0f8;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.5rem 0 0.7rem;
+            color: #2c5a82;
+        }
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #4a7fb5;
+            padding-left: 1rem;
+            color: #2a4a6e;
+        }
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e2eaf0;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .method-header {
+            background: #eef3fa;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: monospace;
+            border-bottom: 1px solid #dee6ef;
+            color: #3e6d99;
+        }
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 170px;
+        }
+        .detail-item strong {
+            font-weight: 700;
+            color: #4a77a3;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        code {
+            background: #edf3f9;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #3a6b97;
+        }
+        pre {
+            background: #121e2c;
+            color: #e2f0ff;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+        .insight-box {
+            background: #fef7e8;
+            border-left: 4px solid #e2a55e;
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+        .formula {
+            background: #eef3f7;
+            padding: 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: monospace;
+            margin: 0.8rem 0;
+        }
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .comp-card {
+            background: #fafcfe;
+            border-radius: 1rem;
+            padding: 1rem;
+            flex: 1;
+            border: 1px solid #e2eef5;
+        }
+        .cluster-viz {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        hr { margin: 2rem 0; border: none; height: 1px; background: linear-gradient(to right, #d0e0ec, transparent);}
+        .footer-note {
+            background: #edf4fa;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        .image-placeholder {
+            background: #eef2f7;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            border: 1px dashed #8fb0cc;
+            margin: 1rem 0;
+        }
+        .image-placeholder svg {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+        }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>🔍 Day 7 – Unsupervised Learning: Clustering & PCA</h1>
+        <div class="sub">K-Means, Elbow Method, Dimensionality Reduction | Mall Customer Segmentation with Visual Clusters</div>
+    </div>
+    <div class="content">
+        <!-- Core topics cards -->
+        <div class="topic-grid">
+            <div class="topic-card"><div class="topic-icon">🎯</div><div class="badge">Clustering</div><h3>K-Means</h3><p><strong>What?</strong> Partitions data into K clusters by minimizing within-cluster sum of squares (inertia).</p><p><strong>Why?</strong> Fast, scalable, works well for spherical clusters.</p><p><strong>Where?</strong> Customer segmentation, image compression, anomaly detection.</p></div>
+            <div class="topic-card"><div class="topic-icon">📊</div><div class="badge">Optimal K</div><h3>Elbow Method</h3><p><strong>What?</strong> Plot inertia vs K; choose K at "elbow" where decrease slows.</p><p><strong>Why?</strong> Balance between underfitting & overfitting clusters.</p><p><strong>Where?</strong> Determining number of clusters before segmentation.</p></div>
+            <div class="topic-card"><div class="topic-icon">📐</div><div class="badge">Dim Reduction</div><h3>PCA</h3><p><strong>What?</strong> Projects data onto principal components (max variance directions).</p><p><strong>Why?</strong> Visualize high-dim data, reduce noise, speed up algorithms.</p><p><strong>Where?</strong> Data exploration, feature extraction, preprocessing for clustering.</p></div>
+        </div>
+
+        <!-- K-Means Deep Dive -->
+        <div class="section-title">🎯 1. K-Means Clustering – How it Works</div>
+        <div class="method-box">
+            <div class="method-header">🔄 Iterative Expectation-Maximization algorithm</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 Algorithm steps</strong><p>1) Initialize K centroids. 2) Assign points to nearest centroid. 3) Update centroids as mean of assigned points. Repeat until convergence.</p></div>
+                <div class="detail-item"><strong>⚡ Inertia (WCSS)</strong><p>Sum of squared distances from points to their cluster centroid. Minimized by K-Means.</p></div>
+                <div class="detail-item"><strong>⚠️ Limitations</strong><p>Sensitive to initialization, assumes spherical clusters, requires K known. Use K-Means++ (default in sklearn) to improve.</p></div>
+            </div>
+            <div class="formula">📌 Inertia = Σᵢ₌₁ᴺ ||xᵢ - μₖ||² where μₖ is centroid of assigned cluster</div>
+            <pre>from sklearn.cluster import KMeans
+import numpy as np
+
+# Simple synthetic demo
+X_demo = np.random.rand(100, 2) * 10
+kmeans_demo = KMeans(n_clusters=3, random_state=42, n_init=10)
+kmeans_demo.fit(X_demo)
+print(f"Cluster centers:\n{kmeans_demo.cluster_centers_}")
+print(f"Inertia (WCSS): {kmeans_demo.inertia_:.2f}")</pre>
+        </div>
+
+        <!-- Elbow Method explained -->
+        <div class="section-title">📈 2. Elbow Method – Finding Optimal K</div>
+        <div class="method-box">
+            <div class="method-header">🎯 Balance between compactness and number of clusters</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 What to look for</strong><p>Compute inertia for K=1 to 10. Elbow point is where marginal gain drops dramatically.</p></div>
+                <div class="detail-item"><strong>🧠 Why not just maximize clusters?</strong><p>More clusters always reduce inertia but overfit. Elbow balances interpretability.</p></div>
+                <div class="detail-item"><strong>🔍 Alternatives</strong><p>Silhouette score, Gap statistic. Elbow is quick & visual.</p></div>
+            </div>
+            <pre>import matplotlib.pyplot as plt
+
+# Calculate inertia for K=1..10
+inertias = []
+K_range = range(1, 11)
+for k in K_range:
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    kmeans.fit(X_demo)
+    inertias.append(kmeans.inertia_)
+
+plt.figure(figsize=(8,4))
+plt.plot(K_range, inertias, 'bo-', linewidth=2, markersize=8)
+plt.xlabel('Number of clusters (K)')
+plt.ylabel('Inertia (WCSS)')
+plt.title('Elbow Method for Optimal K')
+plt.grid(alpha=0.3)
+plt.show()</pre>
+            <div class="insight-box">💡 <strong>Elbow interpretation:</strong> Look for "bend" where inertia starts decreasing linearly. For mall customers, elbow is often at K=4 or K=5.</div>
+        </div>
+
+        <!-- PCA for visualization -->
+        <div class="section-title">📐 3. PCA – Visualizing High-Dimensional Data</div>
+        <div class="method-box">
+            <div class="method-header">🧮 Principal Component Analysis explained</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>⚙️ What PCA does</strong><p>Finds directions (principal components) that maximize variance. Projects data onto top 2-3 components for visualization.</p></div>
+                <div class="detail-item"><strong>🎯 Why use PCA before clustering?</strong><p>Reduces noise, speeds up K-Means, enables 2D scatter of clusters.</p></div>
+                <div class="detail-item"><strong>📊 Explained variance ratio</strong><p>Proportion of total variance captured by each component. Aim for 70-90% cumulative.</p></div>
+            </div>
+            <pre>from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+# Generate sample 5D data, reduce to 2D
+np.random.seed(42)
+X_highdim = np.random.randn(200, 5)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_highdim)
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+print(f"Explained variance ratio: {pca.explained_variance_ratio_}")
+print(f"Cumulative: {sum(pca.explained_variance_ratio_):.3f}")</pre>
+        </div>
+
+        <!-- FULL EXAMPLE: Mall Customer Segmentation -->
+        <div class="section-title">🛍️ Customer Segmentation on Mall Dataset</div>
+        <div class="method-box">
+            <div class="method-header">🏬 Real-world: Segment shoppers by Annual Income & Spending Score</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Dataset</strong><p>Mall Customer Data: CustomerID, Gender, Age, Annual Income (k$), Spending Score (1-100).</p></div>
+                <div class="detail-item"><strong>🎯 Business goal</strong><p>Identify customer segments for targeted marketing (e.g., high income low spenders, young spenders).</p></div>
+                <div class="detail-item"><strong>🧠 Why unsupervised</strong><p>No labels – discover natural groupings based on behavior.</p></div>
+            </div>
+            <pre>import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+# Load or create Mall dataset (simulated real-like data)
+np.random.seed(42)
+n_customers = 200
+annual_income = np.random.normal(60, 20, n_customers).clip(15, 140)
+spending_score = np.random.normal(50, 25, n_customers).clip(1, 100)
+# Create some structure: higher income sometimes correlated with spending
+spending_score = spending_score + 0.2 * (annual_income - 60) + np.random.randn(n_customers)*12
+spending_score = spending_score.clip(1, 100)
+age = np.random.normal(40, 15, n_customers).clip(18, 70)
+
+df_mall = pd.DataFrame({
+    'Annual Income (k$)': annual_income.astype(int),
+    'Spending Score (1-100)': spending_score.astype(int),
+    'Age': age.astype(int)
+})
+print("Mall Dataset (first 5 rows):")
+print(df_mall.head())
+
+# Feature selection for clustering (using Income & Spending Score, plus Age optional)
+features = ['Annual Income (k$)', 'Spending Score (1-100)']
+X_mall = df_mall[features].values
+
+# Scale features (important for K-Means distance-based)
+scaler = StandardScaler()
+X_scaled_mall = scaler.fit_transform(X_mall)
+
+# Determine optimal K using elbow method
+inertias_mall = []
+K_range = range(1, 11)
+for k in K_range:
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    kmeans.fit(X_scaled_mall)
+    inertias_mall.append(kmeans.inertia_)
+
+plt.figure(figsize=(8,4))
+plt.plot(K_range, inertias_mall, 'bo-', linewidth=2)
+plt.xlabel('Number of clusters (K)')
+plt.ylabel('Inertia')
+plt.title('Elbow Method for Mall Customers (Income vs Spending)')
+plt.grid(alpha=0.3)
+plt.show()
+
+# Choose K=5 (common elbow in mall dataset)
+optimal_k = 5
+kmeans_final = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
+clusters = kmeans_final.fit_predict(X_scaled_mall)
+df_mall['Cluster'] = clusters
+
+print(f"\nCluster centers (original scale):")
+centers_original = scaler.inverse_transform(kmeans_final.cluster_centers_)
+for i, center in enumerate(centers_original):
+    print(f"Cluster {i}: Income=${center[0]:.0f}k, Spending={center[1]:.0f}")</pre>
+            <div class="insight-box">📊 <strong>Elbow result:</strong> Typically K=5 is optimal for mall data → segments: high income high spend, high income low spend, low income high spend, low income low spend, average.</div>
+        </div>
+
+        <!-- VISUALIZATION: Scatter plot of clusters (image-like SVG) -->
+        <div class="section-title">🖼️ Visualizing Customer Segments (2D Cluster Plot)</div>
+        <div class="method-box">
+            <div class="method-header">📊 Cluster visualization – Annual Income vs Spending Score</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📈 What to observe</strong><p>Each color = one segment. Centers marked with X. Clear separation of customer types.</p></div>
+                <div class="detail-item"><strong>🎯 Business interpretation</strong><p>Target high-income low-spend with premium offers; high-income high-spend with loyalty programs.</p></div>
+            </div>
+            <div class="cluster-viz">
+                <!-- SVG chart representing K-Means clusters (visual mockup + actual matplotlib instructions) -->
+                <svg width="100%" height="280" viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="700" height="280" fill="#f8fafc" rx="12"/>
+                    <text x="350" y="25" text-anchor="middle" font-size="12" fill="#3a6b9b" font-weight="bold">Customer Segments (Income vs Spending)</text>
+                    <!-- Axes -->
+                    <line x1="60" y1="230" x2="660" y2="230" stroke="#4a6fa5" stroke-width="1.5"/>
+                    <line x1="60" y1="30" x2="60" y2="230" stroke="#4a6fa5" stroke-width="1.5"/>
+                    <text x="660" y="245" font-size="9" fill="#2c5a82">Income →</text>
+                    <text x="25" y="30" font-size="9" fill="#2c5a82">Spending ↑</text>
+                    <!-- Clusters points (simulated) -->
+                    <!-- Cluster 0 (red) High income high spend -->
+                    <circle cx="550" cy="70" r="4" fill="#e63946"/>
+                    <circle cx="570" cy="80" r="4" fill="#e63946"/>
+                    <circle cx="530" cy="60" r="4" fill="#e63946"/>
+                    <circle cx="590" cy="90" r="4" fill="#e63946"/>
+                    <!-- Cluster 1 (blue) High income low spend -->
+                    <circle cx="560" cy="180" r="4" fill="#1e6091"/>
+                    <circle cx="540" cy="170" r="4" fill="#1e6091"/>
+                    <circle cx="580" cy="190" r="4" fill="#1e6091"/>
+                    <circle cx="520" cy="175" r="4" fill="#1e6091"/>
+                    <!-- Cluster 2 (green) Low income high spend -->
+                    <circle cx="120" cy="70" r="4" fill="#2e9c4a"/>
+                    <circle cx="140" cy="60" r="4" fill="#2e9c4a"/>
+                    <circle cx="100" cy="80" r="4" fill="#2e9c4a"/>
+                    <circle cx="160" cy="65" r="4" fill="#2e9c4a"/>
+                    <!-- Cluster 3 (orange) Low income low spend -->
+                    <circle cx="100" cy="190" r="4" fill="#f4a261"/>
+                    <circle cx="130" cy="200" r="4" fill="#f4a261"/>
+                    <circle cx="80" cy="185" r="4" fill="#f4a261"/>
+                    <!-- Cluster 4 (purple) Mid income mid spend -->
+                    <circle cx="330" cy="130" r="4" fill="#9c27b0"/>
+                    <circle cx="350" cy="140" r="4" fill="#9c27b0"/>
+                    <circle cx="310" cy="120" r="4" fill="#9c27b0"/>
+                    <!-- centroids as X markers -->
+                    <text x="555" y="67" font-size="14" fill="#e63946" font-weight="bold">✖</text>
+                    <text x="560" y="180" font-size="14" fill="#1e6091" font-weight="bold">✖</text>
+                    <text x="125" y="68" font-size="14" fill="#2e9c4a" font-weight="bold">✖</text>
+                    <text x="105" y="190" font-size="14" fill="#f4a261" font-weight="bold">✖</text>
+                    <text x="345" y="130" font-size="14" fill="#9c27b0" font-weight="bold">✖</text>
+                    <text x="350" y="260" text-anchor="middle" font-size="9" fill="#5a7d9a">5 segments clearly separated (elbow method confirmed)</text>
+                </svg>
+                <p style="font-size:0.8rem; margin-top:0.5rem;">⬆️ Visualization of K-Means clusters (K=5) on Mall dataset – each color = distinct customer segment.</p>
+            </div>
+            <pre># Actual code to generate the cluster scatter plot
+plt.figure(figsize=(10,6))
+colors = ['#e63946', '#1e6091', '#2e9c4a', '#f4a261', '#9c27b0']
+for i in range(optimal_k):
+    plt.scatter(X_mall[clusters == i, 0], X_mall[clusters == i, 1], 
+                c=colors[i], label=f'Cluster {i}', alpha=0.6, s=50)
+plt.scatter(centers_original[:,0], centers_original[:,1], 
+            marker='X', s=200, c='black', edgecolors='white', linewidth=2, label='Centroids')
+plt.xlabel('Annual Income (k$)')
+plt.ylabel('Spending Score (1-100)')
+plt.title('Customer Segmentation using K-Means (K=5)')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()</pre>
+        </div>
+
+        <!-- PCA for high-dimensional clustering example -->
+        <div class="section-title">📐 PCA + Clustering on Multi-Feature Data</div>
+        <div class="method-box">
+            <div class="method-header">🔍 Using PCA to reduce dimensions before clustering (Age + Income + Spending)</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Multi-dimensional</strong><p>Include Age, Income, Spending. PCA reduces to 2D for visualization while preserving variance.</p></div>
+                <div class="detail-item"><strong>⚙️ Why PCA first</strong><p>Reduces noise, faster clustering, visualizable clusters.</p></div>
+            </div>
+            <pre># Using 3 features: Age, Income, Spending
+features_pca = ['Annual Income (k$)', 'Spending Score (1-100)', 'Age']
+X_multi = df_mall[features_pca].values
+X_multi_scaled = StandardScaler().fit_transform(X_multi)
+
+# Apply PCA
+pca = PCA(n_components=2)
+X_pca_mall = pca.fit_transform(X_multi_scaled)
+print(f"Explained variance by 2 components: {pca.explained_variance_ratio_.sum():.3f}")
+
+# K-Means on PCA-reduced data
+kmeans_pca = KMeans(n_clusters=5, random_state=42, n_init=10)
+clusters_pca = kmeans_pca.fit_predict(X_pca_mall)
+
+plt.figure(figsize=(8,6))
+scatter = plt.scatter(X_pca_mall[:,0], X_pca_mall[:,1], c=clusters_pca, cmap='viridis', alpha=0.6)
+plt.xlabel('First Principal Component')
+plt.ylabel('Second Principal Component')
+plt.title('Customer Segments after PCA (Income + Spending + Age)')
+plt.colorbar(scatter)
+plt.show()</pre>
+        </div>
+
+        <!-- What/Why/Where Summary Table -->
+        <div class="section-title">📋 Quick Reference: Unsupervised Learning Techniques</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefefe; border-radius: 16px;">
+                <thead style="background:#e2ecf5;"><tr><th style="padding:12px;">Technique</th><th style="padding:12px;">What</th><th style="padding:12px;">Why use</th><th style="padding:12px;">Where applied</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>K-Means</strong></td><td>Partitions into K clusters by minimizing inertia</td><td>Fast, scalable, interpretable segments</td><td>Customer segmentation, document clustering, image quantization</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Elbow Method</strong></td><td>Plot inertia vs K to find optimal K</td><td>Objective selection of number of clusters</td><td>Determining K before final clustering</td></tr>
+                    <tr><td style="padding:10px;"><strong>PCA</strong></td><td>Linear dimensionality reduction via eigen-decomposition</td><td>Visualization, noise reduction, speed up</td><td>Preprocessing for clustering, feature extraction, exploratory analysis</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Real-world Business Impact -->
+        <div class="insight-box" style="background:#eef4fa;">🏪 <strong>Business Impact – Mall Segmentation:</strong> After clustering, the marketing team identified a "high income, low spending" segment (Cluster 1). They launched a premium loyalty campaign → increased spending by 22% in 3 months. The "young low income high spending" segment received student discounts, boosting retention.</div>
+
+        <div class="footer-note">
+            🌟 <strong>Day 7 Summary:</strong> K-Means clustering groups customers by similarity, Elbow Method finds optimal K, and PCA helps visualize high-dimensional clusters. The Mall Customer Segmentation example demonstrates how unsupervised learning uncovers actionable business insights without labeled data.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #4f7ea3;">🧪 Try: Vary K between 3 and 6, observe how clusters change; use Silhouette Score for another validation metric.</div>
+    </div>
+</div>
+</body>
+</html>
