@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 10: CNNs for Image Data | Convolution, Pooling, Data Augmentation + CIFAR-10 Classifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1f2b;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5f8a 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.7rem;
+            opacity: 0.92;
+            border-left: 3px solid #8bc9e6;
+            padding-left: 1rem;
+        }
+        .content {
+            padding: 2rem 2.5rem;
+        }
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+        .topic-card {
+            flex: 1;
+            background: #fafcfe;
+            border-radius: 1.5rem;
+            padding: 1.3rem 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 28px -12px rgba(0,0,0,0.1);
+        }
+        .topic-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .topic-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; color: #2c5f8a; }
+        .badge {
+            background: #e8f0f8;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.5rem 0 0.7rem;
+            color: #2c5f8a;
+        }
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #2c5f8a;
+            padding-left: 1rem;
+            color: #1e3a5f;
+        }
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e2eaf0;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .method-header {
+            background: #eef3fa;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: monospace;
+            border-bottom: 1px solid #dee6ef;
+            color: #2c5f8a;
+        }
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 170px;
+        }
+        .detail-item strong {
+            font-weight: 700;
+            color: #3a7b9e;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        code {
+            background: #edf4f9;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #2c5f8a;
+        }
+        pre {
+            background: #121e2c;
+            color: #e2f0ff;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+        .insight-box {
+            background: #fef7e8;
+            border-left: 4px solid #e2a55e;
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+        .formula {
+            background: #eef3f7;
+            padding: 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: monospace;
+            margin: 0.8rem 0;
+        }
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .comp-card {
+            background: #fafcfe;
+            border-radius: 1rem;
+            padding: 1rem;
+            flex: 1;
+            border: 1px solid #e2eef5;
+        }
+        .viz-svg {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        hr { margin: 2rem 0; border: none; height: 1px; background: linear-gradient(to right, #d0e0ec, transparent);}
+        .footer-note {
+            background: #edf4fa;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>🖼️ Day 10 – Convolutional Neural Networks (CNNs) for Image Data</h1>
+        <div class="sub">Convolution, Pooling, Data Augmentation | CIFAR-10 Classifier with Conv2D Layers</div>
+    </div>
+    <div class="content">
+        <!-- Core concepts -->
+        <div class="topic-grid">
+            <div class="topic-card"><div class="topic-icon">🔍</div><div class="badge">Feature Extraction</div><h3>Convolution</h3><p><strong>What?</strong> Slides filters (kernels) over image to detect patterns (edges, textures).</p><p><strong>Why?</strong> Preserves spatial structure, shares weights, fewer parameters than dense.</p><p><strong>Where?</strong> Image classification, object detection, segmentation.</p></div>
+            <div class="topic-card"><div class="topic-icon">📏</div><div class="badge">Downsampling</div><h3>Pooling</h3><p><strong>What?</strong> Max/Average pooling reduces spatial dimensions.</p><p><strong>Why?</strong> Reduces computation, provides translation invariance, prevents overfitting.</p><p><strong>Where?</strong> Between conv layers, before dense layers.</p></div>
+            <div class="topic-card"><div class="topic-icon">🔄</div><div class="badge">Regularization</div><h3>Data Augmentation</h3><p><strong>What?</strong> Apply random transformations (rotation, flip, zoom) during training.</p><p><strong>Why?</strong> Creates more varied data, reduces overfitting, improves generalization.</p><p><strong>Where?</strong> Limited datasets, medical imaging, real-world deployment.</p></div>
+        </div>
+
+        <!-- Convolution Deep Dive -->
+        <div class="section-title">🔍 1. Convolution – How CNNs See Images</div>
+        <div class="method-box">
+            <div class="method-header">📐 Mathematical operation: (I * K)(x,y) = ΣᵢΣⱼ I(x+i, y+j) · K(i,j)</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Filter/Kernel</strong><p>Small matrix (e.g., 3x3) that slides across image. Detects features like edges, corners.</p></div>
+                <div class="detail-item"><strong>🧠 Feature maps</strong><p>Each filter produces one feature map. Multiple filters = multiple feature detectors.</p></div>
+                <div class="detail-item"><strong>⚙️ Parameters</strong><p>Conv layer has far fewer params than dense (e.g., 3x3x3x32 = 864 vs millions).</p></div>
+            </div>
+            <div class="viz-svg">
+                <svg width="100%" height="180" viewBox="0 0 800 180" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="800" height="180" fill="#f8fafc" rx="8"/>
+                    <text x="400" y="20" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold">Convolution Operation: Filter Slides Over Image</text>
+                    <!-- Input image (grid) -->
+                    <rect x="40" y="45" width="80" height="80" fill="#e2e8f0" stroke="#2c5f8a" stroke-width="1.5"/>
+                    <text x="80" y="145" text-anchor="middle" font-size="9" fill="#2c5f8a">Input Image</text>
+                    <text x="80" y="158" text-anchor="middle" font-size="8" fill="#7a9aba">32x32x3</text>
+                    <!-- Filter -->
+                    <rect x="200" y="55" width="40" height="40" fill="#e63946" stroke="#c1272d" stroke-width="1.5" rx="3"/>
+                    <text x="220" y="145" text-anchor="middle" font-size="9" fill="#2c5f8a">Filter</text>
+                    <text x="220" y="158" text-anchor="middle" font-size="8" fill="#7a9aba">3x3x3</text>
+                    <!-- Arrow -->
+                    <line x1="120" y1="85" x2="195" y2="75" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow)"/>
+                    <!-- Output feature map -->
+                    <rect x="320" y="45" width="60" height="60" fill="#2e9c4a" stroke="#1f6e3a" stroke-width="1.5" rx="3"/>
+                    <text x="350" y="145" text-anchor="middle" font-size="9" fill="#2c5f8a">Feature</text>
+                    <text x="350" y="158" text-anchor="middle" font-size="9" fill="#2c5f8a">Map</text>
+                    <line x1="240" y1="75" x2="315" y2="75" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow)"/>
+                    <!-- Plus sign operation -->
+                    <text x="430" y="80" font-size="24" fill="#2c5f8a" font-weight="bold">→</text>
+                    <text x="500" y="70" font-size="10" fill="#5a8f75">Convolution</text>
+                    <text x="500" y="85" font-size="10" fill="#5a8f75">+ Activation</text>
+                    <defs>
+                        <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <p style="font-size:0.75rem; margin-top:0.3rem;">Filter (kernel) slides across image → element-wise multiplication + sum → feature map</p>
+            </div>
+            <pre>import tensorflow as tf
+from tensorflow import keras
+
+# Conv2D layer example
+conv_layer = keras.layers.Conv2D(filters=32, kernel_size=3, activation='relu', input_shape=(32,32,3))
+# Forward pass on dummy CIFAR-like image
+dummy_image = tf.random.normal((1, 32, 32, 3))
+output = conv_layer(dummy_image)
+print(f"Input shape: {dummy_image.shape} -> Output shape: {output.shape}")  # (1, 30, 30, 32)</pre>
+        </div>
+
+        <!-- Pooling Deep Dive -->
+        <div class="section-title">📏 2. Pooling – Downsampling for Efficiency</div>
+        <div class="method-box">
+            <div class="method-header">⬇️ MaxPooling2D: Takes maximum value in each window</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 MaxPooling</strong><p>2x2 window with stride 2 reduces dimensions by 50%. Keeps strongest features.</p></div>
+                <div class="detail-item"><strong>🧠 Why pooling?</strong><p>Reduces parameters, controls overfitting, provides small translation invariance.</p></div>
+                <div class="detail-item"><strong>⚙️ Alternative</strong><p>AveragePooling (smoother), Strided Convolution (learnable downsampling).</p></div>
+            </div>
+            <div class="viz-svg">
+                <svg width="100%" height="130" viewBox="0 0 800 130" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="800" height="130" fill="#f8fafc" rx="8"/>
+                    <text x="400" y="18" text-anchor="middle" font-size="10" fill="#2c5f8a">MaxPooling2D(2x2, stride=2)</text>
+                    <!-- 4x4 grid input -->
+                    <g transform="translate(50,35)">
+                        <rect x="0" y="0" width="80" height="80" fill="#e2e8f0" stroke="#2c5f8a" stroke-width="1"/>
+                        <text x="5" y="15" font-size="8">6</text><text x="25" y="15" font-size="8">8</text><text x="45" y="15" font-size="8">3</text><text x="65" y="15" font-size="8">1</text>
+                        <text x="5" y="35" font-size="8">2</text><text x="25" y="35" font-size="8">9</text><text x="45" y="35" font-size="8">5</text><text x="65" y="35" font-size="8">4</text>
+                        <text x="5" y="55" font-size="8">7</text><text x="25" y="55" font-size="8">3</text><text x="45" y="55" font-size="8">2</text><text x="65" y="55" font-size="8">8</text>
+                        <text x="5" y="75" font-size="8">1</text><text x="25" y="75" font-size="8">4</text><text x="45" y="75" font-size="8">6</text><text x="65" y="75" font-size="8">3</text>
+                    </g>
+                    <text x="90" y="120" text-anchor="middle" font-size="8" fill="#2c5f8a">Input 4x4</text>
+                    <!-- Arrow -->
+                    <line x1="135" y1="75" x2="200" y2="75" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+                    <!-- Output 2x2 -->
+                    <g transform="translate(210,55)">
+                        <rect x="0" y="0" width="40" height="40" fill="#2e9c4a" stroke="#1f6e3a" stroke-width="1"/>
+                        <text x="10" y="22" font-size="10" fill="white">9</text>
+                        <text x="30" y="22" font-size="10" fill="white">5</text>
+                        <text x="10" y="42" font-size="10" fill="white">7</text>
+                        <text x="30" y="42" font-size="10" fill="white">8</text>
+                    </g>
+                    <text x="230" y="120" text-anchor="middle" font-size="8" fill="#2c5f8a">Output 2x2</text>
+                    <defs>
+                        <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <p style="font-size:0.7rem; margin-top:0.2rem;">MaxPooling takes maximum in each 2x2 window → reduces size, keeps dominant features</p>
+            </div>
+            <pre>import tensorflow as tf
+
+# MaxPooling example
+pool_layer = keras.layers.MaxPooling2D(pool_size=(2,2), strides=2)
+input_feature = tf.random.normal((1, 32, 32, 16))
+output = pool_layer(input_feature)
+print(f"Input: {input_feature.shape} → After MaxPool: {output.shape}")  # (1, 16, 16, 16)</pre>
+        </div>
+
+        <!-- Data Augmentation -->
+        <div class="section-title">🔄 3. Data Augmentation – Synthetic Data Generation</div>
+        <div class="method-box">
+            <div class="method-header">🎲 Random transformations during training</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Common augmentations</strong><p>Rotation, width/height shift, zoom, flip, brightness adjustment.</p></div>
+                <div class="detail-item"><strong>🧠 Why it works</strong><p>Makes model invariant to transformations, reduces overfitting, especially with small datasets.</p></div>
+                <div class="detail-item"><strong>⚙️ Implementation</strong><p>Use tf.image, ImageDataGenerator, or RandomFlip/RandomRotation layers in Keras.</p></div>
+            </div>
+            <pre>from tensorflow.keras import layers
+
+# Built-in Keras augmentation layers (efficient on-GPU)
+data_augmentation = keras.Sequential([
+    layers.RandomFlip("horizontal"),
+    layers.RandomRotation(0.1),
+    layers.RandomZoom(0.1),
+    layers.RandomTranslation(0.1, 0.1),
+])
+
+# Apply to a batch
+sample_images = tf.random.normal((4, 32, 32, 3))
+augmented = data_augmentation(sample_images)
+print(f"Original shape: {sample_images.shape} -> Augmented: {augmented.shape}")</pre>
+            <div class="insight-box">💡 <strong>Best practice:</strong> Apply data augmentation only during training, not validation/testing. Use realistic transformations (don't flip digits "6" to "9" for MNIST).</div>
+        </div>
+
+        <!-- FULL EXAMPLE: CIFAR-10 CNN Classifier -->
+        <div class="section-title">🚀 CIFAR-10 Image Classification with CNN</div>
+        <div class="method-box">
+            <div class="method-header">📸 10 classes: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Dataset</strong><p>50k train, 10k test. 32x32 RGB images. Challenging: small, diverse objects.</p></div>
+                <div class="detail-item"><strong>🎯 Architecture</strong><p>Conv2D(32) → MaxPool → Conv2D(64) → MaxPool → Flatten → Dense(128) → Dense(10)</p></div>
+                <div class="detail-item"><strong>⚙️ Training</strong><p>Adam optimizer, categorical crossentropy, data augmentation, 20 epochs.</p></div>
+            </div>
+            <pre>import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load CIFAR-10
+cifar10 = keras.datasets.cifar10
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+
+# Normalize pixel values
+x_train = x_train.astype('float32') / 255.0
+x_test = x_test.astype('float32') / 255.0
+
+# Convert labels to categorical (one-hot)
+y_train_cat = keras.utils.to_categorical(y_train, 10)
+y_test_cat = keras.utils.to_categorical(y_test, 10)
+
+print(f"Train: {x_train.shape}, Test: {x_test.shape}")
+class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+
+# Data augmentation for training
+data_augmentation = keras.Sequential([
+    layers.RandomFlip("horizontal"),
+    layers.RandomRotation(0.1),
+    layers.RandomZoom(0.1),
+    layers.RandomTranslation(0.1, 0.1),
+])
+
+# Build CNN Model
+def create_cnn_model():
+    inputs = keras.Input(shape=(32, 32, 3))
+    # Data augmentation (only during training)
+    x = data_augmentation(inputs)
+    
+    # First Conv Block
+    x = layers.Conv2D(32, (3,3), activation='relu', padding='same')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Conv2D(32, (3,3), activation='relu', padding='same')(x)
+    x = layers.MaxPooling2D((2,2))(x)
+    x = layers.Dropout(0.2)(x)
+    
+    # Second Conv Block
+    x = layers.Conv2D(64, (3,3), activation='relu', padding='same')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Conv2D(64, (3,3), activation='relu', padding='same')(x)
+    x = layers.MaxPooling2D((2,2))(x)
+    x = layers.Dropout(0.3)(x)
+    
+    # Third Conv Block
+    x = layers.Conv2D(128, (3,3), activation='relu', padding='same')(x)
+    x = layers.MaxPooling2D((2,2))(x)
+    x = layers.Dropout(0.4)(x)
+    
+    # Dense layers
+    x = layers.Flatten()(x)
+    x = layers.Dense(128, activation='relu')(x)
+    x = layers.Dropout(0.5)(x)
+    outputs = layers.Dense(10, activation='softmax')(x)
+    
+    model = keras.Model(inputs, outputs)
+    return model
+
+model = create_cnn_model()
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+model.summary()
+
+# Train
+history = model.fit(x_train, y_train_cat,
+                    batch_size=64,
+                    epochs=20,
+                    validation_data=(x_test, y_test_cat),
+                    verbose=1)
+
+# Evaluate
+test_loss, test_acc = model.evaluate(x_test, y_test_cat, verbose=0)
+print(f"\n✅ Test Accuracy: {test_acc:.4f}")
+
+# Plot training curves
+plt.figure(figsize=(12,4))
+plt.subplot(1,2,1)
+plt.plot(history.history['accuracy'], label='Train Acc')
+plt.plot(history.history['val_accuracy'], label='Val Acc')
+plt.xlabel('Epoch'); plt.ylabel('Accuracy'); plt.legend(); plt.title('Model Accuracy')
+plt.subplot(1,2,2)
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Val Loss')
+plt.xlabel('Epoch'); plt.ylabel('Loss'); plt.legend(); plt.title('Model Loss')
+plt.tight_layout()
+plt.show()</pre>
+            <div class="insight-box">📊 <strong>Expected results:</strong> Simple CNN on CIFAR-10 ~70-75% accuracy. With deeper architecture + augmentation + batch norm → 80-85%. Data augmentation typically improves validation accuracy by 3-5%.</div>
+        </div>
+
+        <!-- Visualize Predictions -->
+        <div class="method-box">
+            <div class="method-header">🖼️ Sample Predictions on CIFAR-10</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🔍 Visualize model outputs</strong><p>See correct/incorrect classifications, confidence scores.</p></div>
+            </div>
+            <pre># Predict and visualize
+predictions = model.predict(x_test)
+pred_classes = np.argmax(predictions, axis=1)
+true_classes = y_test.flatten()
+
+# Display some predictions
+plt.figure(figsize=(12, 8))
+for i in range(16):
+    plt.subplot(4, 4, i+1)
+    plt.imshow(x_test[i])
+    color = 'green' if pred_classes[i] == true_classes[i] else 'red'
+    plt.title(f"{class_names[pred_classes[i]]}", fontsize=8, color=color)
+    plt.axis('off')
+plt.suptitle('CIFAR-10 Predictions (green=correct, red=incorrect)', fontsize=12)
+plt.tight_layout()
+plt.show()
+
+# Show confidence for first image
+print(f"True: {class_names[true_classes[0]]}")
+print("Class probabilities:")
+for i, name in enumerate(class_names):
+    print(f"  {name:12s}: {predictions[0][i]:.3f}")</pre>
+        </div>
+
+        <!-- CNN Architecture Visualization -->
+        <div class="section-title">🏗️ CNN Architecture Diagram</div>
+        <div class="viz-svg">
+            <svg width="100%" height="200" viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="900" height="200" fill="#f8fafc" rx="8"/>
+                <text x="450" y="18" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold">CNN Architecture for CIFAR-10 Classification</text>
+                <!-- Input -->
+                <rect x="15" y="55" width="50" height="50" fill="#e2e8f0" stroke="#2c5f8a" stroke-width="1.5" rx="4"/>
+                <text x="40" y="115" text-anchor="middle" font-size="8">Input</text>
+                <text x="40" y="125" text-anchor="middle" font-size="7">32x32x3</text>
+                <!-- Conv+Pool 1 -->
+                <rect x="100" y="45" width="60" height="70" fill="#e63946" stroke="#c1272d" stroke-width="1.5" rx="4"/>
+                <text x="130" y="125" text-anchor="middle" font-size="8">Conv2D</text>
+                <text x="130" y="135" text-anchor="middle" font-size="7">32, 3x3</text>
+                <!-- Arrow -->
+                <line x1="65" y1="80" x2="95" y2="80" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow3)"/>
+                <!-- Pool -->
+                <rect x="185" y="55" width="50" height="50" fill="#f4a261" stroke="#e2a55e" stroke-width="1.5" rx="4"/>
+                <text x="210" y="115" text-anchor="middle" font-size="8">MaxPool</text>
+                <line x1="160" y1="80" x2="180" y2="80" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow3)"/>
+                <!-- Conv+Pool 2 -->
+                <rect x="260" y="35" width="60" height="80" fill="#2e9c4a" stroke="#1f6e3a" stroke-width="1.5" rx="4"/>
+                <text x="290" y="125" text-anchor="middle" font-size="8">Conv2D</text>
+                <text x="290" y="135" text-anchor="middle" font-size="7">64, 3x3</text>
+                <line x1="235" y1="80" x2="255" y2="80" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow3)"/>
+                <rect x="345" y="55" width="50" height="50" fill="#f4a261" stroke="#e2a55e" stroke-width="1.5" rx="4"/>
+                <text x="370" y="115" text-anchor="middle" font-size="8">MaxPool</text>
+                <line x1="320" y1="80" x2="340" y2="80" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow3)"/>
+                <!-- Flatten -->
+                <rect x="430" y="65" width="50" height="40" fill="#9c27b0" stroke="#7b1fa2" stroke-width="1.5" rx="4"/>
+                <text x="455" y="115" text-anchor="middle" font-size="8">Flatten</text>
+                <line x1="395" y1="80" x2="425" y2="80" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow3)"/>
+                <!-- Dense -->
+                <rect x="520" y="50" width="60" height="60" fill="#1e3a5f" stroke="#0d2440" stroke-width="1.5" rx="4"/>
+                <text x="550" y="115" text-anchor="middle" font-size="8">Dense</text>
+                <text x="550" y="125" text-anchor="middle" font-size="7">128</text>
+                <line x1="480" y1="85" x2="515" y2="85" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow3)"/>
+                <!-- Output -->
+                <rect x="625" y="60" width="50" height="50" fill="#e63946" stroke="#c1272d" stroke-width="1.5" rx="4"/>
+                <text x="650" y="115" text-anchor="middle" font-size="8">Output</text>
+                <text x="650" y="125" text-anchor="middle" font-size="7">10</text>
+                <line x1="580" y1="80" x2="620" y2="80" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrow3)"/>
+                <defs>
+                    <marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+                    </marker>
+                </defs>
+            </svg>
+            <p style="font-size:0.75rem; margin-top:0.3rem;">Input → Conv+Pool blocks (extract features) → Flatten → Dense layers → Classification output</p>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="section-title">📊 CNN vs MLP for Image Classification</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefefe; border-radius: 16px;">
+                <thead style="background:#e2ecf5;"><tr><th style="padding:12px;">Aspect</th><th style="padding:12px;">CNN (Conv2D + Pooling)</th><th style="padding:12px;">MLP (Dense layers)</th><th style="padding:12px;">Why CNN wins for images</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Parameters</strong></td><td style="padding:10px;">~100k-1M</td><td style="padding:10px;">~10M-100M (for 32x32x3)</td><td style="padding:10px;">Shared weights drastically reduce params</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Spatial structure</strong></td><td style="padding:10px;">Preserves via convolutions</td><td style="padding:10px;">Flattens, loses locality</td><td style="padding:10px;">CNNs exploit spatial hierarchies</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>Translation invariance</strong></td><td style="padding:10px;">Built-in (pooling, shared filters)</td><td style="padding:10px;">None (needs massive data)</td><td style="padding:10px;">Objects appear anywhere in image</td></tr>
+                    <tr><td style="padding:10px;"><strong>CIFAR-10 accuracy</strong></td><td style="padding:10px;">~75-85%</td><td style="padding:10px;">~50-55%</td><td style="padding:10px;">CNNs capture edges/textures/shapes</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Best Practices -->
+        <div class="method-box">
+            <div class="method-header">🎯 CNN Best Practices & Tips</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 Architecture</strong><p>Start with small filters (3x3). Double filters each layer (32→64→128). End with GlobalAveragePooling or Flatten.</p></div>
+                <div class="detail-item"><strong>🛡️ Regularization</strong><p>Dropout (0.2-0.5), BatchNormalization, Data Augmentation, L2 weight decay.</p></div>
+                <div class="detail-item"><strong>⚡ Training</strong><p>Use learning rate scheduling, early stopping, model checkpointing.</p></div>
+            </div>
+            <pre># Advanced: Learning rate scheduling
+initial_learning_rate = 0.001
+lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate, decay_steps=10000, decay_rate=0.9, staircase=True
+)
+optimizer = keras.optimizers.Adam(learning_rate=lr_schedule)
+
+# Early stopping callback
+early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+
+# Train with callbacks
+model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+history = model.fit(x_train, y_train_cat, epochs=50, validation_data=(x_test, y_test_cat),
+                    callbacks=[early_stop], verbose=1)</pre>
+        </div>
+
+        <div class="footer-note">
+            🌟 <strong>Day 10 Summary:</strong> CNNs revolutionized computer vision with convolutions (feature extraction), pooling (downsampling), and data augmentation (regularization). The CIFAR-10 classifier demonstrates end-to-end CNN training, achieving ~75-85% accuracy – significantly better than MLPs. Key insights: CNNs preserve spatial structure, share weights, and generalize well to new images.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #4f7ea3;">🧪 Try: Add more Conv layers, change filter sizes, or use transfer learning (ResNet50) for higher accuracy!</div>
+    </div>
+</div>
+</body>
+</html>
