@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 5: Decision Trees & Random Forest | Gini, Bagging, Feature Importance + Churn Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f3ef;
+            color: #1e1a15;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        .hero {
+            background: linear-gradient(135deg, #2d5f3e 0%, #568b5c 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.7rem;
+            opacity: 0.92;
+            border-left: 3px solid #c0e0b0;
+            padding-left: 1rem;
+        }
+        .content {
+            padding: 2rem 2.5rem;
+        }
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+        .topic-card {
+            flex: 1;
+            background: #fefcf9;
+            border-radius: 1.5rem;
+            padding: 1.3rem 1.5rem;
+            border: 1px solid #e2dfd8;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 28px -12px rgba(0,0,0,0.1);
+        }
+        .topic-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .topic-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; color: #2f6b47; }
+        .badge {
+            background: #e9f3e5;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.5rem 0 0.7rem;
+            color: #2f6b47;
+        }
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #548c5f;
+            padding-left: 1rem;
+            color: #2b5438;
+        }
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e4e2da;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .method-header {
+            background: #f4f8f0;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: monospace;
+            border-bottom: 1px solid #dfe8d8;
+            color: #3b7552;
+        }
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 170px;
+        }
+        .detail-item strong {
+            font-weight: 700;
+            color: #4b7b5e;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        code {
+            background: #edf4e9;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #3b6e4f;
+        }
+        pre {
+            background: #1f2a1e;
+            color: #e2f0da;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+        .insight-box {
+            background: #fcf8e8;
+            border-left: 4px solid #d4a373;
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+        .formula {
+            background: #eef3ea;
+            padding: 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: monospace;
+            margin: 0.8rem 0;
+        }
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .comp-card {
+            background: #fefaf5;
+            border-radius: 1rem;
+            padding: 1rem;
+            flex: 1;
+            border: 1px solid #e2dfd5;
+        }
+        hr { margin: 2rem 0; border: none; height: 1px; background: linear-gradient(to right, #e0e0d8, transparent);}
+        .footer-note {
+            background: #f6faf2;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>🌳 Day 5 – Decision Trees & Random Forest</h1>
+        <div class="sub">Gini impurity, Feature importance, Bagging | Customer Churn Prediction: Tree vs Forest accuracy</div>
+    </div>
+    <div class="content">
+        <!-- Three pillars -->
+        <div class="topic-grid">
+            <div class="topic-card"><div class="topic-icon">🌿</div><div class="badge">Split criterion</div><h3>Gini Impurity</h3><p><strong>What?</strong> Measures node impurity: Gini = 1 - Σ(pᵢ²). Lower → purer nodes.</p><p><strong>Why?</strong> Faster than entropy, similar performance. Minimized at each split.</p><p><strong>Where?</strong> Decision tree (CART), Random Forest node splitting.</p></div>
+            <div class="topic-card"><div class="topic-icon">⭐</div><div class="badge">Interpretability</div><h3>Feature Importance</h3><p><strong>What?</strong> Total reduction of impurity (Gini importance) by feature across splits.</p><p><strong>Why?</strong> Identify top predictors, simplify models, explain decisions.</p><p><strong>Where?</strong> Feature selection, business insights (churn drivers).</p></div>
+            <div class="topic-card"><div class="topic-icon">🎲</div><div class="badge">Ensemble method</div><h3>Bagging</h3><p><strong>What?</strong> Bootstrap Aggregation: train trees on bootstrapped samples, average predictions.</p><p><strong>Why?</strong> Reduces variance, overfitting; improves stability & accuracy.</p><p><strong>Where?</strong> Random Forest, Bagged trees, any high-variance model.</p></div>
+        </div>
+
+        <!-- Gini impurity deep dive -->
+        <div class="section-title">📐 1. Gini Impurity – How Trees Make Splits</div>
+        <div class="method-box">
+            <div class="method-header">🎯 Mathematical intuition & calculation</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 What is Gini?</strong><p>For a node with class probabilities p₁,...,pₖ: Gini = 1 - Σ(pᵢ²). Minimum 0 (pure node), max 0.5 for binary with 50-50 split.</p></div>
+                <div class="detail-item"><strong>🧠 Why not misclassification error?</strong><p>Gini is differentiable and sensitive to changes in class probabilities → better for growing trees.</p></div>
+                <div class="detail-item"><strong>⚙️ How used</strong><p>For each candidate split, compute weighted Gini of children. Choose split that reduces impurity most.</p></div>
+            </div>
+            <div class="formula">✂️ Gini gain = Gini(parent) - [ (n_left/n)*Gini(left) + (n_right/n)*Gini(right) ]</div>
+            <pre>import numpy as np
+
+def gini(probs):
+    return 1 - sum(p**2 for p in probs)
+
+# Example: node with 80% churn (class 1) and 20% no-churn
+probs_node = [0.8, 0.2]
+print(f"Gini impurity: {gini(probs_node):.3f}")
+# After split: left child (90% churn, 10% no), right child (30% churn, 70% no)
+gini_left = gini([0.9, 0.1])
+gini_right = gini([0.3, 0.7])
+weighted_gini = 0.5 * gini_left + 0.5 * gini_right
+print(f"Split Gini: {weighted_gini:.3f} → reduction of {gini(probs_node)-weighted_gini:.3f}")</pre>
+        </div>
+
+        <!-- Feature importance explanation -->
+        <div class="section-title">⭐ 2. Feature Importance – Interpreting Tree & Forest</div>
+        <div class="method-box">
+            <div class="method-header">🌲 Total Gini decrease across all splits</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📌 What it represents</strong><p>For each feature, sum of impurity reductions (weighted by samples) every time it's used for splitting. Normalized to [0,1].</p></div>
+                <div class="detail-item"><strong>🎯 Why business relevance</strong><p>In churn prediction: identify key drivers like 'tenure', 'contract type', 'monthly charges' → actionable insights.</p></div>
+                <div class="detail-item"><strong>🔍 Where used</strong><p>Feature selection, model simplification, understanding model logic for stakeholders.</p></div>
+            </div>
+            <pre>from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+
+# synthetic importance demo (full churn data later)
+X_dummy = np.random.rand(100,5)
+y_dummy = (X_dummy[:,0] + X_dummy[:,1]*2 > 1).astype(int)
+tree = DecisionTreeClassifier()
+tree.fit(X_dummy, y_dummy)
+importance = tree.feature_importances_
+print("Feature importances (Gini based):", importance)</pre>
+        </div>
+
+        <!-- Bagging deep dive -->
+        <div class="section-title">🎲 3. Bagging – Bootstrap Aggregation</div>
+        <div class="method-box">
+            <div class="method-header">🔄 Why Random Forest beats a single tree</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📦 Bagging mechanism</strong><p>1) Create B bootstrapped datasets (sampling with replacement). 2) Train a decision tree on each. 3) Aggregate predictions (majority vote).</p></div>
+                <div class="detail-item"><strong>🎯 Why reduces variance</strong><p>Single tree overfits easily. Bagging averages uncorrelated trees → lower error, more robust.</p></div>
+                <div class="detail-item"><strong>🆚 Random Forest extra</strong><p>RF also randomizes feature subsets per split → further decorrelates trees → even better.</p></div>
+            </div>
+            <div class="insight-box">✅ Random Forest typically achieves higher accuracy than a single decision tree on test data, especially with complex patterns.</div>
+        </div>
+
+        <!-- FULL EXAMPLE: Customer Churn Prediction -->
+        <div class="section-title">📞 Customer Churn Prediction – Tree vs Forest</div>
+        <div class="method-box">
+            <div class="method-header">🏢 Telco Churn Dataset: Compare Decision Tree & Random Forest</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 What we predict</strong><p>Binary target: customer churn (Yes/No). Features: tenure, MonthlyCharges, Contract type, InternetService, etc.</p></div>
+                <div class="detail-item"><strong>🎯 Why churn</strong><p>High business impact: identify at-risk customers, improve retention strategies.</p></div>
+                <div class="detail-item"><strong>⚙️ Steps</strong><p>Load data, preprocess (encode categoricals), train/test split, evaluate accuracy, precision, recall, feature importance.</p></div>
+            </div>
+            <pre># Simulated realistic churn example (using sklearn-like API with synthetic robust data)
+# For demonstration we generate a realistic churn dataset (or you can load Telco dataset from URL)
+# In production you can use pd.read_csv('telco_churn.csv')
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+
+# Generate synthetic churn dataset (similar patterns to real telco)
+np.random.seed(42)
+n_samples = 3000
+tenure = np.random.randint(1, 72, n_samples)
+monthly_charges = np.random.uniform(20, 120, n_samples)
+contract = np.random.choice(['Month-to-month', 'One year', 'Two year'], n_samples, p=[0.55,0.25,0.2])
+internet = np.random.choice(['DSL', 'Fiber optic', 'No'], n_samples, p=[0.4,0.4,0.2])
+# churn logic: higher churn if month-to-month + high charges + low tenure
+churn_prob = ( (contract == 'Month-to-month') * 0.4 + 
+               (monthly_charges > 70) * 0.2 + 
+               (tenure < 12) * 0.2 +
+               (internet == 'Fiber optic') * 0.1)
+churn = (churn_prob + np.random.rand(n_samples)*0.2) > 0.45
+churn = churn.astype(int)
+
+df = pd.DataFrame({'tenure': tenure, 'MonthlyCharges': monthly_charges, 
+                   'Contract': contract, 'InternetService': internet, 'Churn': churn})
+
+# Encode categoricals
+df['Contract'] = LabelEncoder().fit_transform(df['Contract'])  # 0,1,2
+df['InternetService'] = LabelEncoder().fit_transform(df['InternetService'])
+
+X = df.drop('Churn', axis=1)
+y = df['Churn']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Decision Tree
+dt = DecisionTreeClassifier(max_depth=5, random_state=42)  # limited depth to avoid overfit
+dt.fit(X_train, y_train)
+y_pred_dt = dt.predict(X_test)
+
+# Random Forest
+rf = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
+rf.fit(X_train, y_train)
+y_pred_rf = rf.predict(X_test)
+
+# Compare accuracy
+acc_dt = accuracy_score(y_test, y_pred_dt)
+acc_rf = accuracy_score(y_test, y_pred_rf)
+
+print(f"🌳 Decision Tree Accuracy: {acc_dt:.4f}")
+print(f"🌲 Random Forest Accuracy: {acc_rf:.4f}")
+print(f"Improvement: {(acc_rf - acc_dt)*100:.2f}%")
+print("\nClassification Report - Random Forest:")
+print(classification_report(y_test, y_pred_rf, target_names=['No Churn', 'Churn']))
+</pre>
+            <div class="insight-box">📊 Typical result: Random Forest outperforms a single Decision Tree by 3–8% in accuracy, with better generalization and less overfitting.</div>
+        </div>
+
+        <!-- Feature importance plot & comparison -->
+        <div class="method-box">
+            <div class="method-header">📊 Feature Importance: What drives churn?</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🔍 From Random Forest</strong><p>Importance scores based on average Gini reduction across all trees. Top features: Contract type, tenure, MonthlyCharges.</p></div>
+                <div class="detail-item"><strong>💡 Business use</strong><p>Target customers with month-to-month contracts & high charges for retention campaigns.</p></div>
+            </div>
+            <pre>importances = rf.feature_importances_
+features = X.columns
+indices = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(8,4))
+plt.title("Random Forest Feature Importance (Gini-based)")
+plt.bar(range(len(importances)), importances[indices], color='#5c9e6b')
+plt.xticks(range(len(importances)), features[indices], rotation=45)
+plt.tight_layout()
+plt.show()
+for i in range(len(features)):
+    print(f"{features[indices[i]]}: {importances[indices[i]]:.3f}")</pre>
+        </div>
+
+        <!-- Overfitting comparison: Tree vs Forest -->
+        <div class="two-col">
+            <div class="comp-card"><strong>⚠️ Single Decision Tree</strong><br>✔ High interpretability, easy visualization. ✘ Prone to overfitting, small changes in data cause big variance.<br><code>train_acc ~ 95%, test_acc ~ 78% (typical gap)</code></div>
+            <div class="comp-card"><strong>✅ Random Forest</strong><br>✔ Reduces overfitting, handles non-linearity, robust to outliers. ✘ Less interpretable (black-box), slower inference.<br><code>train_acc ~ 88%, test_acc ~ 83% → smaller gap</code></div>
+        </div>
+
+        <!-- When to use which? Where -->
+        <div class="section-title">📌 Decision Tree vs Random Forest: What/Why/Where</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefef9; border-radius: 16px;">
+                <thead style="background:#e2efdb;"><tr><th style="padding:12px;">Model</th><th style="padding:12px;">What (core)</th><th style="padding:12px;">Why choose</th><th style="padding:12px;">Where best applied</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e2e8da;"><strong>Decision Tree</strong></td><td>Single hierarchical if-else rules</td><td>Need white-box model, fast training, small data</td><td>Quick baseline, exploratory analysis, low-stakes decisions</td></tr>
+                    <tr><td style="padding:10px;"><strong>Random Forest</strong></td><td>Ensemble of bagged trees + random features</td><td>High accuracy, reduce overfitting, capture complex interactions</td><td>Churn prediction, fraud detection, finance, medical diagnosis</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Advanced: Out-of-Bag score and hyperparams -->
+        <div class="method-box">
+            <div class="method-header">🛠️ Hyperparameter Tuning & Out-of-Bag (OOB) Evaluation</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>⚙️ Key RF params</strong><p><code>n_estimators</code> (trees), <code>max_depth</code>, <code>min_samples_split</code>, <code>max_features</code>. OOB score estimates validation without CV.</p></div>
+                <div class="detail-item"><strong>🎯 Where OOB helps</strong><p>Quick estimate of generalization error, especially for large datasets where CV is expensive.</p></div>
+            </div>
+            <pre>rf_oob = RandomForestClassifier(n_estimators=100, oob_score=True, random_state=42)
+rf_oob.fit(X_train, y_train)
+print(f"OOB Score (estimate): {rf_oob.oob_score_:.3f}")
+print(f"Test Accuracy: {accuracy_score(y_test, rf_oob.predict(X_test)):.3f}")</pre>
+        </div>
+
+        <!-- Real-world scenario -->
+        <div class="insight-box" style="background:#ecf7e6;">📞 <strong>Business impact – Telecom Churn</strong>: Random Forest identified that customers with month-to-month contracts and high monthly charges have >60% churn probability. The marketing team launched targeted loyalty programs, reducing churn by 18% within 3 months. Feature importance guided the intervention.</div>
+        
+        <div class="footer-note">
+            🌟 <strong>Summary Day 5:</strong> Gini impurity drives tree splits, bagging (Random Forest) reduces variance, and feature importance provides interpretability. In churn prediction, Random Forest consistently outperforms a single decision tree, delivering both accuracy and actionable insights.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #5b8c6e;">🧪 Try: Adjust <code>max_depth</code> and <code>n_estimators</code> in Random Forest – watch accuracy & overfitting trade-off.</div>
+    </div>
+</div>
+</body>
+</html>
