@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ML Foundations: NumPy, Pandas, Matplotlib | Iris Dataset Deep Dive</title>
+    <!-- Google Fonts & simple reset -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            color: #0a0f1c;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* header section */
+        .hero {
+            background: linear-gradient(135deg, #0b2b40 0%, #1b4f6e 100%);
+            padding: 2.5rem 2.8rem;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero .sub {
+            font-size: 1rem;
+            font-weight: 400;
+            opacity: 0.85;
+            max-width: 80%;
+            border-left: 3px solid #7dd3fc;
+            padding-left: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        /* main content */
+        .content {
+            padding: 2rem 2.5rem;
+        }
+
+        /* topic cards */
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .topic-card {
+            flex: 1 1 240px;
+            background: #f8fafc;
+            border-radius: 1.5rem;
+            padding: 1.4rem 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #e2edf2;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 28px -12px rgba(0,0,0,0.1);
+            border-color: #cbdde6;
+        }
+
+        .topic-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-card h3 {
+            font-size: 1.45rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #0c4e6e;
+        }
+
+        .pill {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 0.9rem;
+        }
+
+        .topic-card p {
+            font-size: 0.9rem;
+            color: #2c3e44;
+            margin-bottom: 0.7rem;
+        }
+
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #2c7da0;
+            padding-left: 1rem;
+            color: #0f2c38;
+        }
+
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e9f0f5;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+        }
+
+        .method-header {
+            background: #eef4ff;
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+            font-family: monospace;
+            border-bottom: 1px solid #dce5ec;
+            color: #1f5e7e;
+        }
+
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .detail-item {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .detail-item strong {
+            font-weight: 700;
+            color: #1f4e6c;
+            display: block;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item p, .detail-item code {
+            font-size: 0.92rem;
+            color: #1f2c38;
+        }
+
+        code {
+            background: #edf2f7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 1.2rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            font-family: monospace;
+            margin: 1rem 0;
+            line-height: 1.45;
+        }
+
+        .example-output {
+            background: #fefce8;
+            border-left: 4px solid #eab308;
+            padding: 0.8rem 1.2rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            border-radius: 0.8rem;
+            margin-top: 0.8rem;
+        }
+
+        hr {
+            margin: 2rem 0;
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, #cbd5e1, transparent);
+        }
+
+        .footer-note {
+            margin-top: 2rem;
+            background: #f1f5f9;
+            padding: 1.2rem;
+            text-align: center;
+            border-radius: 1.5rem;
+            font-size: 0.85rem;
+            color: #336b87;
+        }
+
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+            .hero { padding: 1.5rem; }
+            .method-detail { flex-direction: column; gap: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>📊 Week 1: Foundations & Classical ML</h1>
+        <div class="sub">Day 1 – Python for ML Basics: NumPy, Pandas, Matplotlib <br> 🔍 Deep dive with Iris dataset: loading, statistics, scatter matrix</div>
+    </div>
+    <div class="content">
+        <!-- 3 core libraries overview -->
+        <div class="topic-grid">
+            <div class="topic-card">
+                <div class="topic-icon">🔢</div>
+                <div class="pill">NumPy</div>
+                <h3>Numerical Python</h3>
+                <p><strong>What?</strong> N-dimensional arrays, vectorized math, linear algebra.</p>
+                <p><strong>Why?</strong> Speed & efficiency for large data. Foundation for ML models.</p>
+                <p><strong>Where?</strong> Data preprocessing, feature scaling, matrix operations, random sampling.</p>
+            </div>
+            <div class="topic-card">
+                <div class="topic-icon">🐼</div>
+                <div class="pill">Pandas</div>
+                <h3>DataFrame power</h3>
+                <p><strong>What?</strong> High-performance tabular data structures (DataFrame/Series).</p>
+                <p><strong>Why?</strong> Real-world messy data → cleaning, grouping, merging, stats.</p>
+                <p><strong>Where?</strong> Load CSV/DB, handle missing values, feature engineering, aggregation.</p>
+            </div>
+            <div class="topic-card">
+                <div class="topic-icon">📈</div>
+                <div class="pill">Matplotlib</div>
+                <h3>Visualization core</h3>
+                <p><strong>What?</strong> Comprehensive plotting library (static/interactive).</p>
+                <p><strong>Why?</strong> Explore patterns, detect outliers, communicate insights.</p>
+                <p><strong>Where?</strong> Histograms, scatter plots, scatter matrix, model evaluation curves.</p>
+            </div>
+        </div>
+
+        <!-- Iris dataset in depth with why / how / where example -->
+        <div class="section-title">🌿 Iris dataset: complete hands‑on example</div>
+        <div class="method-box">
+            <div class="method-header">📂 1. Load dataset & initial inspection (Pandas + NumPy)</div>
+            <div class="method-detail">
+                <div class="detail-item">
+                    <strong>🎯 WHAT</strong>
+                    <p>Load the classic Iris dataset (150 samples, 4 numeric features, 3 species). Compute basic descriptive statistics and array-level operations.</p>
+                </div>
+                <div class="detail-item">
+                    <strong>🧠 WHY</strong>
+                    <p>Pandas provides high-level summary (<code>describe()</code>, <code>mean()</code>). NumPy enables fast mathematical operations on underlying arrays.</p>
+                </div>
+                <div class="detail-item">
+                    <strong>📍 WHERE in ML pipeline</strong>
+                    <p>EDA (Exploratory Data Analysis) – understand feature distributions, class balance, and preliminary scaling needs.</p>
+                </div>
+            </div>
+            <pre>import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+
+# Load iris as pandas DataFrame
+iris = load_iris()
+df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
+df['species'] = iris.target_names[iris.target]
+
+# Basic stats using pandas & numpy
+print("🔹 First 5 rows:")
+print(df.head())
+
+print("\n🔹 Descriptive statistics (mean, std, min, max etc):")
+print(df.describe())
+
+# Compute mean & std using NumPy on feature columns
+feature_cols = iris.feature_names
+mean_np = np.mean(df[feature_cols], axis=0)
+std_np = np.std(df[feature_cols], axis=0, ddof=0)  # population std
+
+print("\n🔹 NumPy computed mean per feature:")
+for name, m in zip(feature_cols, mean_np):
+    print(f"   {name:20s} : {m:.4f}")
+print("\n🔹 NumPy computed std deviation:")
+for name, s in zip(feature_cols, std_np):
+    print(f"   {name:20s} : {s:.4f}")</pre>
+            <div class="example-output">
+                📌 Sample output snippet:<br>
+                sepal length (cm) mean = 5.8433, std ≈ 0.8281 ; petal width (cm) mean = 1.1993, std ≈ 0.7632<br>
+                Pandas <code>.describe()</code> also shows quartiles, count, min/max — perfect for initial sanity checks.
+            </div>
+        </div>
+
+        <!-- mean & std deeper explanation -->
+        <div class="method-box">
+            <div class="method-header">📐 2. Why compute mean & std? (Normalization / Z-score context)</div>
+            <div class="method-detail">
+                <div class="detail-item">
+                    <strong>⚡ What we compute</strong>
+                    <p>Mean → central tendency; Standard deviation → spread of data. For each numeric feature, we calculate both.</p>
+                </div>
+                <div class="detail-item">
+                    <strong>💡 Why it matters</strong>
+                    <p>Many ML algorithms (SVM, KNN, neural nets) assume features on similar scale. Mean & std are used for <strong>standardization</strong> (Z-score). Outlier detection also leverages these.</p>
+                </div>
+                <div class="detail-item">
+                    <strong>⚙️ Where applied</strong>
+                    <p>Preprocessing step: <code>sklearn.preprocessing.StandardScaler</code> uses (x - mean)/std. Also used to understand feature dominance (e.g., petal length variability).</p>
+                </div>
+            </div>
+            <pre># Quick standardization manually using computed mean & std
+features = df[feature_cols].values  # numpy array
+mean_vals = np.mean(features, axis=0)
+std_vals = np.std(features, axis=0)
+features_standardized = (features - mean_vals) / std_vals
+print("Standardized first 3 samples (first 2 features):\n", features_standardized[:3, :2])</pre>
+        </div>
+
+        <!-- Scatter matrix deep dive -->
+        <div class="method-box">
+            <div class="method-header">📈 3. Scatter Matrix: multi‑dimensional visualization</div>
+            <div class="method-detail">
+                <div class="detail-item">
+                    <strong>👁️ What is it?</strong>
+                    <p>Grid of scatter plots for each pair of features. Diagonal shows histogram (or KDE) of each variable. Colors represent species.</p>
+                </div>
+                <div class="detail-item">
+                    <strong>🎯 Why use scatter matrix?</strong>
+                    <p>Reveals correlations, clusters, separability between classes. Iris is famous: setosa is linearly separable, versicolor & virginica show overlap.</p>
+                </div>
+                <div class="detail-item">
+                    <strong>🛠️ Where in ML workflow</strong>
+                    <p>Feature selection (detect redundant features), identify non‑linear patterns, guide dimensionality reduction (PCA).</p>
+                </div>
+            </div>
+            <pre>from pandas.plotting import scatter_matrix
+
+# Scatter matrix with color by species
+fig, ax = plt.subplots(figsize=(12, 10))
+scatter_matrix(df, alpha=0.7, figsize=(12, 10), diagonal='hist',
+               c=df['species'].astype('category').cat.codes, cmap='viridis',
+               marker='o', hist_kwds={'bins': 20}, s=40)
+plt.suptitle('Iris Dataset - Scatter Matrix (colored by species)', 
+             y=0.93, fontsize=14)
+plt.gcf().tight_layout()
+# plt.savefig('iris_scatter_matrix.png')  # optional
+plt.show()</pre>
+            <div class="example-output">
+                ✅ <strong>Interpretation example:</strong><br>
+                • Sepal length vs petal width → positive correlation (points trend upward).<br>
+                • Petal length vs petal width → strong linear trend, useful for classification.<br>
+                • Histogram diagonals: petal width/length show bimodality because of species separation.
+            </div>
+        </div>
+
+        <!-- extra: NumPy for array stats & Pandas grouping -->
+        <div class="section-title">🧩 Beyond basics: group-wise statistics & numpy integration</div>
+        <div class="method-box">
+            <div class="method-header">📊 Group mean/std by species (Pandas + NumPy backend)</div>
+            <div class="method-detail">
+                <div class="detail-item">
+                    <strong>Group operations</strong>
+                    <p>Compute mean & std per species – reveals differences between Setosa, Versicolor, Virginica. Pandas groupby + agg.</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Where this is useful</strong>
+                    <p>Understand feature importance per class, design class‑conditional preprocessing, or feature engineering.</p>
+                </div>
+            </div>
+            <pre>grouped = df.groupby('species')[feature_cols].agg(['mean', 'std'])
+print("Feature statistics per Iris species:")
+print(grouped.round(3))
+
+# NumPy approach per group (optional)
+setosa_data = df[df['species']=='setosa'][feature_cols].to_numpy()
+print(f"\nSetosa petal length mean (NumPy): {np.mean(setosa_data[:,2]):.3f}")</pre>
+        </div>
+
+        <!-- Real-World Application mapping -->
+        <div class="section-title">🌍 How these tools fit in real‑world ML</div>
+        <div class="topic-grid" style="margin-bottom: 1rem;">
+            <div class="topic-card" style="background: #eef2ff;">
+                <div class="topic-icon">🏭</div>
+                <h3>NumPy in production</h3>
+                <p>Tensor operations, neural net weight matrices, convolution backend. Nearly every DL framework (TensorFlow, PyTorch) mimics NumPy API.</p>
+            </div>
+            <div class="topic-card" style="background: #eef2ff;">
+                <div class="topic-icon">🏢</div>
+                <h3>Pandas at scale</h3>
+                <p>Finance, e‑commerce, sensor data — used for data wrangling before Scikit‑learn pipelines. Handles missing values, time series, merges.</p>
+            </div>
+            <div class="topic-card" style="background: #eef2ff;">
+                <div class="topic-icon">📉</div>
+                <h3>Matplotlib + Seaborn</h3>
+                <p>Model diagnostics (residual plots, confusion matrix heatmaps, learning curves). Industry standard for reporting & Jupyter notebooks.</p>
+            </div>
+        </div>
+
+        <!-- Full Code integration example (reproducible) -->
+        <div class="section-title">📝 Complete reproducible script (Iris → stats → scatter matrix)</div>
+        <pre style="background:#0f172a; margin-bottom:1rem;">
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from pandas.plotting import scatter_matrix
+
+# ---------- 1. Load ----------
+iris_data = load_iris()
+df = pd.DataFrame(iris_data.data, columns=iris_data.feature_names)
+df['species'] = iris_data.target_names[iris_data.target]
+
+# ---------- 2. Compute mean & std using NumPy ----------
+feature_names = iris_data.feature_names
+features_np = df[feature_names].values
+mean_array = np.mean(features_np, axis=0)
+std_array = np.std(features_np, axis=0)
+
+print("===== Iris Feature Statistics =====")
+for i, col in enumerate(feature_names):
+    print(f"{col:20s} → mean = {mean_array[i]:.4f}, std = {std_array[i]:.4f}")
+
+# ---------- 3. Pandas describe for comparison ----------
+print("\n===== Pandas describe (quick overview) =====")
+print(df.describe())
+
+# ---------- 4. Build a nice scatter matrix ----------
+fig = plt.figure(figsize=(11, 9))
+scatter_matrix(df, alpha=0.7, figsize=(11, 9), diagonal='hist',
+               c=df['species'].astype('category').cat.codes, cmap='plasma',
+               marker='.', s=55, hist_kwds={'bins': 18})
+plt.suptitle('Iris: Scatter Matrix – Pairwise relationships & species patterns', 
+             fontsize=13, y=0.94)
+plt.tight_layout()
+plt.show()
+
+# Bonus: group stats
+print("\n===== Per species mean ± std (Pandas) =====")
+print(df.groupby('species')[feature_names].agg(['mean', 'std']).round(3))
+        </pre>
+
+        <!-- Summary tables: What/Why/Where quick reference -->
+        <div class="section-title">⚡ Quick reference card: what・why・where</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #f9fbfd; border-radius: 20px;">
+                <thead style="background:#d9e9f2;">
+                    <tr><th style="padding:12px; text-align:left;">Library</th><th style="padding:12px; text-align:left;">What</th><th style="padding:12px; text-align:left;">Why for ML</th><th style="padding:12px; text-align:left;">Where (project phase)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td style="padding:12px; border-bottom:1px solid #e2e8f0;"><strong>NumPy</strong></td><td style="padding:12px;">Multidimensional arrays, math functions, random, linear algebra.</td><td style="padding:12px;">Essential for feature scaling, distance computations, weight updates.</td><td style="padding:12px;">Data prep, custom algorithms, model implementation from scratch.</td></tr>
+                    <tr><td style="padding:12px; border-bottom:1px solid #e2e8f0;"><strong>Pandas</strong></td><td style="padding:12px;">DataFrame/Series, I/O, missing data, grouping, merging.</td><td style="padding:12px;">Easily handle real data, create features, aggregate stats, split data.</td><td style="padding:12px;">EDA, cleaning, feature engineering, result aggregation.</td></tr>
+                    <tr><td style="padding:12px;"><strong>Matplotlib</strong></td><td style="padding:12px;">Line plots, scatter, histograms, custom figures, subplots.</td><td style="padding:12px;">Explore distributions, check assumptions, present model performance.</td><td style="padding:12px;">EDA, diagnostic plots, final report & dashboards.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer-note">
+            📌 <strong>Key takeaway:</strong> NumPy → number crunching at speed. Pandas → structured data wrangling. Matplotlib → reveal hidden patterns. <br>
+            The Iris scatter matrix instantly shows that petal measurements separate species better than sepal ones — guiding feature selection for classifiers like Logistic Regression or SVM.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #3f6b83;">
+            🧪 Try yourself: modify the scatter matrix colormap, add title, compute correlation matrix with NumPy corrcoef()
+        </div>
+    </div>
+</div>
+</body>
+</html>

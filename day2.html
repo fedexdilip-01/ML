@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 2: Data Preprocessing - Missing Values, Scaling & Encoding | Titanic Deep Dive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #eef2f5;
+            color: #0a1c25;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 40px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #1e3c2c 0%, #2a5a3a 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.8rem;
+            opacity: 0.9;
+            border-left: 3px solid #a7e0b0;
+            padding-left: 1rem;
+        }
+
+        .content {
+            padding: 2rem 2.5rem;
+        }
+
+        /* Three pillars overview */
+        .pillars {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .pillar-card {
+            flex: 1;
+            background: #f9fef7;
+            border-radius: 1.2rem;
+            padding: 1.3rem 1.4rem;
+            border-left: 5px solid;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
+        }
+
+        .pillar-card:hover { transform: translateY(-3px); background: #ffffff; box-shadow: 0 12px 20px -12px rgba(0,0,0,0.1);}
+        .pillar-card:nth-child(1) { border-left-color: #e67e22; }
+        .pillar-card:nth-child(2) { border-left-color: #2c7da0; }
+        .pillar-card:nth-child(3) { border-left-color: #6c3483; }
+
+        .pillar-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .pillar-card h3 { font-size: 1.3rem; margin-bottom: 0.4rem; }
+        .pillar-badge { background: #e9ecef; display: inline-block; padding: 0.2rem 0.7rem; border-radius: 30px; font-size: 0.7rem; font-weight: 600; margin: 0.5rem 0;}
+
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #2e7d64;
+            padding-left: 1rem;
+            color: #1b3b2c;
+        }
+
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e0ede6;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+        }
+
+        .method-header {
+            background: #edf7f2;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            font-family: monospace;
+            border-bottom: 1px solid #cde0d6;
+            color: #1e5631;
+        }
+
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .detail-item {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .detail-item strong {
+            font-weight: 700;
+            color: #1f5e4b;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        code {
+            background: #edf2f0;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        pre {
+            background: #0f1e18;
+            color: #dcfce8;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+
+        .insight-box {
+            background: #fef5e8;
+            border-left: 4px solid #f39c12;
+            padding: 0.8rem 1.3rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .col {
+            flex: 1;
+            background: #fafcfb;
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid #deede5;
+        }
+
+        hr {
+            margin: 2rem 0;
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, #cbdcd2, transparent);
+        }
+
+        .footer {
+            background: #eef3f0;
+            text-align: center;
+            padding: 1.2rem;
+            border-radius: 1rem;
+            margin-top: 2rem;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+            .hero { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>🧹 Day 2 – Data Preprocessing: Missing Values, Scaling & Encoding</h1>
+        <div class="sub">📌 Real-world case: Titanic dataset — handle missing ages/embark, scale numerical features, encode categorical variables. Build clean, ML-ready data.</div>
+    </div>
+    <div class="content">
+        <!-- Overview of 3 preprocessing families -->
+        <div class="pillars">
+            <div class="pillar-card"><div class="pillar-icon">❓</div><h3>Missing Values</h3><div class="pillar-badge">what · why · how · where</div><p>Identify & treat nulls (drop, impute with mean/median/mode, or advanced). Prevents model bias & data loss.</p></div>
+            <div class="pillar-card"><div class="pillar-icon">📏</div><h3>Feature Scaling</h3><div class="pillar-badge">StandardScaler · MinMax</div><p>Bring features to same magnitude. Essential for distance-based & gradient models (SVM, KNN, neural nets).</p></div>
+            <div class="pillar-card"><div class="pillar-icon">🏷️</div><h3>Encoding</h3><div class="pillar-badge">One-Hot · Label Encoding</div><p>Convert categorical text (sex, embarked) into numeric form. Vital for most algorithms.</p></div>
+        </div>
+
+        <!-- TITANIC EXAMPLE MAIN -->
+        <div class="section-title">🚢 Titanic Dataset – Practical Preprocessing Pipeline</div>
+        <div class="method-box">
+            <div class="method-header">📥 1. Load & Inspect: Identify missing values & data types</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🔍 What</strong><p>Load Titanic (training set) and examine null counts, data types using pandas. Columns like Age, Cabin, Embarked have missing entries.</p></div>
+                <div class="detail-item"><strong>💡 Why</strong><p>Understanding missing patterns informs strategy: MCAR, MAR? Decide if dropping or imputation is safe. Cabin ~77% missing → often dropped.</p></div>
+                <div class="detail-item"><strong>📌 Where</strong><p>Initial EDA phase before feature engineering. Skewed distributions may require median imputation.</p></div>
+            </div>
+            <pre>import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+
+# Load Titanic data (available via seaborn or local)
+url = "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
+titanic = pd.read_csv(url)
+
+# Initial missing check
+print("Missing values per column:\n", titanic.isnull().sum())
+print("\nData types:", titanic.dtypes.value_counts())
+
+# Sample: Age (177 missing), Embarked (2 missing), Cabin (687 missing)
+print(f"Age missing: {titanic['Age'].isnull().sum()} / {len(titanic)}")</pre>
+            <div class="insight-box">💡 <strong>Observation:</strong> 'Cabin' has >75% missing — often dropped for baseline models. 'Age' missing ~20% → impute with median/mean by class. 'Embarked' only 2 missing → fill with mode.</div>
+        </div>
+
+        <!-- Missing values detailed -->
+        <div class="method-box">
+            <div class="method-header">🩹 2. Handling Missing Values (Imputation strategies)</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🎯 What we do</strong><p>Use SimpleImputer (strategy='median' for Age, 'most_frequent' for Embarked). Also drop 'Cabin' due to excessive missing.</p></div>
+                <div class="detail-item"><strong>🧠 Why median vs mean?</strong><p>Age is skewed (young children & elderly) → median robust to outliers. Mean would be influenced by extreme values.</p></div>
+                <div class="detail-item"><strong>⚙️ Where this matters</strong><p>Logistic regression, tree-based models handle missing differently; imputation is safe baseline for any algorithm.</p></div>
+            </div>
+            <pre># Option 1: Manual imputation (explanatory)
+titanic_clean = titanic.copy()
+# Median Age imputation
+titanic_clean['Age'].fillna(titanic_clean['Age'].median(), inplace=True)
+# Mode for Embarked (most frequent)
+titanic_clean['Embarked'].fillna(titanic_clean['Embarked'].mode()[0], inplace=True)
+# Drop Cabin (too many missing) and PassengerId, Name, Ticket (non-informative for demo)
+titanic_clean.drop(['Cabin', 'PassengerId', 'Name', 'Ticket'], axis=1, inplace=True)
+
+# Verify missing gone
+print("Remaining missing:\n", titanic_clean.isnull().sum())
+
+# Using sklearn pipeline for robust repetition
+from sklearn.impute import SimpleImputer
+age_imputer = SimpleImputer(strategy='median')
+embarked_imputer = SimpleImputer(strategy='most_frequent')
+titanic['Age_imputed'] = age_imputer.fit_transform(titanic[['Age']])
+print(f"After imputation - Age nulls: {titanic['Age_imputed'].isnull().sum()}")</pre>
+        </div>
+
+        <!-- Feature Scaling with StandardScaler -->
+        <div class="method-box">
+            <div class="method-header">⚖️ 3. Feature Scaling – StandardScaler (z-score normalization)</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 What is StandardScaler?</strong><p>Transforms features to mean=0, std=1: (x - μ) / σ. Applies to numeric columns (Age, Fare, SibSp, Parch).</p></div>
+                <div class="detail-item"><strong>🎯 Why scale?</strong><p>Algorithms like SVM, KNN, PCA, and neural nets are sensitive to magnitude. Fare (0-512) dominates Age (0-80) without scaling.</p></div>
+                <div class="detail-item"><strong>📍 Where to use</strong><p>Before model training, after train/test split to avoid data leakage. StandardScaler fitted on training only.</p></div>
+            </div>
+            <pre>from sklearn.preprocessing import StandardScaler
+
+# Select numeric columns (after imputation)
+numeric_features = ['Age', 'Fare', 'SibSp', 'Parch']
+scaler = StandardScaler()
+
+# Fit and transform (for demonstration on cleaned DataFrame)
+titanic_clean[numeric_features] = scaler.fit_transform(titanic_clean[numeric_features])
+
+print("After StandardScaler:\n", titanic_clean[numeric_features].head())
+print(f"Mean of Age after scaling: {titanic_clean['Age'].mean():.2e} (≈0)")
+print(f"Std of Fare after scaling: {titanic_clean['Fare'].std():.2f} (≈1)")</pre>
+            <div class="insight-box">📌 StandardScaler does NOT guarantee bounded range (values can be outside [-2,2]), but it's optimal for many linear models. For tree-based models, scaling is unnecessary but not harmful.</div>
+        </div>
+
+        <!-- Encoding categorical variables -->
+        <div class="method-box">
+            <div class="method-header">🏷️ 4. Encoding categorical features: Sex & Embarked</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>✏️ What encoding does</strong><p>Convert text labels (male/female, S/C/Q) to numbers. Two main ways: Label Encoding (ordinal) and One-Hot Encoding (dummy variables).</p></div>
+                <div class="detail-item"><strong>🔧 Why not just map?</strong><p>One-Hot prevents false ordinal relationships (e.g., 'S' < 'C' meaningless). Sex is binary → label encoding works fine.</p></div>
+                <div class="detail-item"><strong>🌟 Where crucial</strong><p>Linear models, neural nets, distance-based algorithms need encoded categories. Use pandas get_dummies or sklearn OneHotEncoder.</p></div>
+            </div>
+            <pre># Method 1: One-Hot Encoding for Embarked (nominal)
+titanic_encoded = pd.get_dummies(titanic_clean, columns=['Embarked'], prefix='Emb', drop_first=False)
+
+# Method 2: Label encoding for Sex (binary)
+titanic_encoded['Sex'] = titanic_encoded['Sex'].map({'male': 0, 'female': 1})
+
+# Show final preprocessed dataset
+print("Encoded columns preview:")
+print(titanic_encoded[['Sex', 'Embarked_C', 'Embarked_Q', 'Embarked_S']].head())
+
+# Using sklearn OneHotEncoder for robust pipeline
+from sklearn.preprocessing import OneHotEncoder
+ohe = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+embarked_encoded = ohe.fit_transform(titanic_clean[['Embarked']])
+print(f"One-hot shape: {embarked_encoded.shape} (3 new columns)")</pre>
+        </div>
+
+        <!-- End-to-end Pipeline (ColumnTransformer) -->
+        <div class="section-title">⚙️ Full Preprocessing Pipeline: Sklearn ColumnTransformer</div>
+        <div class="method-box">
+            <div class="method-header">🔁 Reproducible pipeline: handle missing + scale + encode together</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📦 What it does</strong><p>ColumnTransformer applies different transformations to numeric vs categorical columns, imputes missing, scales, one-hot encodes.</p></div>
+                <div class="detail-item"><strong>✅ Why pipeline?</strong><p>Avoids data leakage, easy cross-validation, production deployment. Fits on training only, transforms test set seamlessly.</p></div>
+                <div class="detail-item"><strong>🚀 Where used</strong><p>Standard in ML competitions (Kaggle) & real-time inference systems. Maintains consistency across data splits.</p></div>
+            </div>
+            <pre>from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+
+# Define columns
+numeric_cols = ['Age', 'Fare', 'SibSp', 'Parch']
+categorical_cols = ['Sex', 'Embarked']
+
+# Preprocessing for numeric: median imputation + scaling
+numeric_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())
+])
+
+# Categorical: most_frequent impute + one-hot encoding
+categorical_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
+])
+
+# Combine
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_transformer, numeric_cols),
+        ('cat', categorical_transformer, categorical_cols)
+    ])
+
+# Sample usage (fit on raw Titanic with missing values)
+X_raw = titanic[numeric_cols + categorical_cols]  # contains missing Age etc.
+preprocessor.fit(X_raw)
+X_processed = preprocessor.transform(X_raw)
+print(f"Processed shape: {X_processed.shape} features after encoding + scaling")
+print("First 2 rows (numeric scaled + one-hot encoded):")
+print(X_processed[:2])</pre>
+        </div>
+
+        <!-- Comparison table What/Why/Where for each technique -->
+        <div class="section-title">📋 Quick Reference: What · Why · Where (Preprocessing techniques)</div>
+        <div style="overflow-x: auto; margin: 1rem 0;">
+            <table style="width:100%; border-collapse: collapse; background: #fcfef9; border-radius: 16px;">
+                <thead style="background:#cce3da;">
+                    <tr><th style="padding: 12px; text-align:left;">Technique</th><th style="padding:12px; text-align:left;">What (definition)</th><th style="padding:12px; text-align:left;">Why (ML benefit)</th><th style="padding:12px; text-align:left;">Where (scenario)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e2e8e0;"><strong>Median Imputation</strong></td><td>Replace missing values with median of column.</td><td>Robust to outliers, preserves central tendency.</td><td>Skewed numeric features (Age, Fare, House price).</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e2e8e0;"><strong>Mode Imputation</strong></td><td>Fill missing with most frequent category.</td><td>Simple, retains class distribution for categorical.</td><td>Embarked, Gender (few missing).</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e2e8e0;"><strong>StandardScaler</strong></td><td>Z-score: (x-μ)/σ → mean 0, variance 1.</td><td>Equal contribution of features; needed for regularization, PCA, SVM.</td><td>Linear models, neural nets, distance metrics (KNN, K-Means).</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e2e8e0;"><strong>One-Hot Encoding</strong></td><td>Creates binary columns per category.</td><td>Avoids ordinal misinterpretation, works with non-linear relationships.</td><td>Nominal categories (Embarked, Color, City).</td></tr>
+                    <tr><td style="padding:10px;"><strong>ColumnTransformer</strong></td><td>Apply different transforms to different columns.</td><td>Modular, prevents leakage, clean code.</td><td>Mixed data types (tabular ML pipelines).</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Impact Example: Why scaling matters -->
+        <div class="two-col">
+            <div class="col">
+                <h3 style="color:#1e5631;">📉 Without Scaling</h3>
+                <p>Distance-based model (KNN) on raw Titanic: Fare (range 0-512) dominates Age (0-80). Model barely considers Age changes, leading to poor predictions for groups with similar fare but different age.</p>
+                <code># KNN distance = sqrt((Fare_diff)² + (Age_diff)²) -> Fare term huge weight</code>
+            </div>
+            <div class="col">
+                <h3 style="color:#1e5631;">✅ After StandardScaler</h3>
+                <p>Features contribute equally. Both Age and Fare have variance = 1. Model performance (accuracy) improves especially for small datasets or sensitive distances. Essential for regularization (L1/L2).</p>
+                <code>StandardScaler: fair influence → better generalization</code>
+            </div>
+        </div>
+
+        <!-- Additional advanced note (why encoding + scaling order) -->
+        <div class="method-box">
+            <div class="method-header">⚠️ Best practice: Order of operations & Leakage prevention</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>🧩 Correct sequence</strong><p>1) Split train/test → 2) Fit imputer/scaler/encoder ONLY on train → 3) Transform train+test. Do NOT compute global statistics before split.</p></div>
+                <div class="detail-item"><strong>🎯 Why this matters?</strong><p>Information from test set leaking into scaler (mean/std) leads to optimistic performance estimates (overfitting to test distribution).</p></div>
+                <div class="detail-item"><strong>📌 Real-world impact</strong><p>Models fail in production because preprocessing statistics were computed on full dataset. Always encapsulate in pipelines.</p></div>
+            </div>
+            <pre>from sklearn.model_selection import train_test_split
+
+X = titanic[numeric_cols + categorical_cols]
+y = titanic['Survived']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Correct: Fit preprocessor on train only
+preprocessor.fit(X_train)
+X_train_processed = preprocessor.transform(X_train)
+X_test_processed = preprocessor.transform(X_test)   # uses train's parameters
+
+print("No leakage: test transformation uses train's mean & one-hot categories!")</pre>
+        </div>
+
+        <div class="footer">
+            🧠 <strong>Summary: Day 2 Takeaways</strong> — Missing values? Impute smartly (median for skewed, mode for categorical). Scale features for fair model comparison. Encode categories without introducing ordinal bias. <br>
+            The Titanic preprocessing pipeline turns raw passenger data into a clean, ML-ready matrix. Master these, and you unlock robust modeling!
+        </div>
+    </div>
+</div>
+</body>
+</html>
