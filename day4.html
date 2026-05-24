@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 4: Logistic Regression & Classification Metrics | Breast Cancer + ROC Curves</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f2f0;
+            color: #1f1a17;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        .hero {
+            background: linear-gradient(135deg, #672e4b 0%, #a14d6e 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.7rem;
+            opacity: 0.92;
+            border-left: 3px solid #f3b3d0;
+            padding-left: 1rem;
+        }
+        .content {
+            padding: 2rem 2.5rem;
+        }
+        /* 3 cards */
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+        .topic-card {
+            flex: 1;
+            background: #fefaf8;
+            border-radius: 1.5rem;
+            padding: 1.3rem 1.5rem;
+            border: 1px solid #f0e2dc;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 28px -12px rgba(0,0,0,0.1);
+        }
+        .topic-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .topic-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; color: #882d5f; }
+        .badge {
+            background: #f8e5ef;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.5rem 0 0.7rem;
+            color: #a13065;
+        }
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #b85c8a;
+            padding-left: 1rem;
+            color: #50273b;
+        }
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #f0dfe6;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .method-header {
+            background: #fef2f6;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: monospace;
+            border-bottom: 1px solid #f0dae3;
+            color: #a1356c;
+        }
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 170px;
+        }
+        .detail-item strong {
+            font-weight: 700;
+            color: #b5497a;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        code {
+            background: #f9f0f4;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #bc4e7c;
+        }
+        pre {
+            background: #1e191c;
+            color: #fadfec;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+        .insight-box {
+            background: #fef2e8;
+            border-left: 4px solid #e5989b;
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+        .formula {
+            background: #f3e9ef;
+            padding: 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: monospace;
+            margin: 0.8rem 0;
+        }
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .metric-card {
+            background: #fcf8f5;
+            border-radius: 1rem;
+            padding: 1rem;
+            flex: 1;
+            border: 1px solid #edd9e2;
+        }
+        hr { margin: 2rem 0; border: none; height: 1px; background: linear-gradient(to right, #ecd9e2, transparent);}
+        .footer-note {
+            background: #fdf7f4;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>🩺 Day 4 – Logistic Regression & Classification Metrics</h1>
+        <div class="sub">Sigmoid, Confusion Matrix, ROC-AUC | Breast Cancer Classification + ROC Curve</div>
+    </div>
+    <div class="content">
+        <!-- three core pillars -->
+        <div class="topic-grid">
+            <div class="topic-card"><div class="topic-icon">📈</div><div class="badge">Activation Function</div><h3>Sigmoid Function</h3><p><strong>What?</strong> σ(z) = 1 / (1 + e⁻ᶻ) — maps any real number to (0,1) → probability estimate.</p><p><strong>Why?</strong> Transforms linear output into class probability, decision boundary.</p><p><strong>Where?</strong> Logistic regression, neural network output layer (binary).</p></div>
+            <div class="topic-card"><div class="topic-icon">📊</div><div class="badge">Evaluation</div><h3>Confusion Matrix</h3><p><strong>What?</strong> Table with TP, FP, FN, TN. Basis for accuracy, precision, recall, F1.</p><p><strong>Why?</strong> Understand misclassifications, class imbalance effects.</p><p><strong>Where?</strong> Medical diagnosis, fraud detection, any binary classifier.</p></div>
+            <div class="topic-card"><div class="topic-icon">📉</div><div class="badge">Threshold metric</div><h3>ROC-AUC</h3><p><strong>What?</strong> ROC curve: TPR vs FPR at thresholds. AUC = area under curve (1 = perfect).</p><p><strong>Why?</strong> Model ranking ability, threshold-independent measure.</p><p><strong>Where?</strong> Compare classifiers, imbalanced datasets.</p></div>
+        </div>
+
+        <!-- Sigmoid deep dive -->
+        <div class="section-title">🧠 1. Sigmoid: From Linear to Probability</div>
+        <div class="method-box">
+            <div class="method-header">🔢 The logistic function & decision boundary</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 Mathematical form</strong><p>P(y=1|X) = σ(β₀ + β₁X₁ + ... + βₙXₙ) = 1/(1+exp(-z)). Output ∈ (0,1).</p></div>
+                <div class="detail-item"><strong>🎯 Why not linear regression?</strong><p>Linear regression can predict outside [0,1]. Sigmoid ensures valid probability & nice derivative for gradient ascent.</p></div>
+                <div class="detail-item"><strong>⚙️ Decision rule</strong><p>If P≥0.5 → class 1 (malignant), else class 0 (benign). Threshold can be tuned.</p></div>
+            </div>
+            <div class="formula">🧪 Log-odds: log(p/(1-p)) = β₀ + β₁X₁ + ... + βₙXₙ</div>
+            <pre>import numpy as np
+import matplotlib.pyplot as plt
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+z_vals = np.linspace(-10, 10, 200)
+plt.figure(figsize=(8,4))
+plt.plot(z_vals, sigmoid(z_vals), color='#c44f7a', linewidth=2.5)
+plt.axhline(0.5, linestyle='--', color='gray', alpha=0.6)
+plt.title('Sigmoid Function: maps linear output to probability')
+plt.xlabel('z = w·x + b')
+plt.ylabel('σ(z) → Probability')
+plt.grid(alpha=0.3)
+plt.show()
+print(f"Sigmoid(0) = {sigmoid(0):.2f} (threshold 0.5)")</pre>
+        </div>
+
+        <!-- confusion matrix & metrics -->
+        <div class="section-title">📋 2. Confusion Matrix & Key Metrics</div>
+        <div class="method-box">
+            <div class="method-header">🧬 Breast Cancer: understanding TP, FP, FN, TN</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>✅ Confusion Matrix Layout</strong><p>Predicted vs Actual: <br>TP (malignant correct), FP (false alarm), FN (missed cancer), TN (healthy correct).</p></div>
+                <div class="detail-item"><strong>🎯 Why each metric?</strong><p><strong>Precision</strong> = TP/(TP+FP) → when FP costly? <strong>Recall</strong> = TP/(TP+FN) → critical for cancer detection.</p></div>
+                <div class="detail-item"><strong>📍 Use case</strong><p>Imbalanced scenarios: accuracy misleading; F1-score (harmonic mean of precision/recall) balances both.</p></div>
+            </div>
+            <pre>from sklearn.metrics import confusion_matrix, classification_report
+
+# Example dummy predictions (0=benign, 1=malignant)
+y_true = [0, 1, 0, 1, 0, 1, 0, 0, 1, 1]
+y_pred = [0, 1, 0, 0, 0, 1, 0, 1, 1, 1]  # 2 errors
+
+cm = confusion_matrix(y_true, y_pred)
+tn, fp, fn, tp = cm.ravel()
+print(f"Confusion Matrix:\n{cm}")
+print(f"TP={tp}, FP={fp}, TN={tn}, FN={fn}")
+print(f"Precision = {tp/(tp+fp):.2f} | Recall = {tp/(tp+fn):.2f} | F1 = {2*tp/(2*tp+fp+fn):.2f}")
+print(classification_report(y_true, y_pred, target_names=['Benign','Malignant']))</pre>
+            <div class="insight-box">⚠️ In breast cancer screening, high Recall (sensitivity) is vital to avoid false negatives (missed cancer). Logistic regression thresholds can be lowered to increase recall.</div>
+        </div>
+
+        <!-- ROC-AUC in depth -->
+        <div class="section-title">📈 3. ROC Curve & AUC – Ranking performance</div>
+        <div class="method-box">
+            <div class="method-header">🎯 TPR vs FPR trade-off & AUC interpretation</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 ROC Curve</strong><p>True Positive Rate (Recall) vs False Positive Rate (1 - Specificity) for all thresholds. Shows classifier's discrimination ability.</p></div>
+                <div class="detail-item"><strong>🏆 AUC value</strong><p>AUC = 1 (perfect), 0.5 (random). Higher AUC means better separation. AUC = probability that model ranks random positive > random negative.</p></div>
+                <div class="detail-item"><strong>🔍 Where used</strong><p>Model comparison, imbalanced datasets, medical tests, credit scoring.</p></div>
+            </div>
+            <pre>from sklearn.metrics import roc_curve, auc
+import matplotlib.pyplot as plt
+
+# Example probabilities
+y_true_bin = [0, 0, 1, 1, 0, 1, 0, 1, 1, 0]
+y_scores = [0.2, 0.4, 0.7, 0.9, 0.3, 0.85, 0.25, 0.95, 0.6, 0.55]
+
+fpr, tpr, thresholds = roc_curve(y_true_bin, y_scores)
+roc_auc = auc(fpr, tpr)
+
+plt.figure(figsize=(7,5))
+plt.plot(fpr, tpr, label=f'Logistic Regression (AUC = {roc_auc:.2f})', color='#b3416b', lw=2)
+plt.plot([0,1],[0,1], 'k--', label='Random Classifier (AUC=0.5)')
+plt.xlabel('False Positive Rate (1 - Specificity)')
+plt.ylabel('True Positive Rate (Recall)')
+plt.title('ROC Curve')
+plt.legend()
+plt.grid(alpha=0.2)
+plt.show()</pre>
+        </div>
+
+        <!-- Full Breast Cancer Example -->
+        <div class="section-title">🩺 Complete: Breast Cancer Classification with Logistic Regression</div>
+        <div class="method-box">
+            <div class="method-header">⚙️ sklearn Logistic Regression + ROC curve plot</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📦 What we do</strong><p>Load breast cancer dataset (30 features). Train logistic regression, predict probabilities, evaluate confusion matrix & plot ROC curve.</p></div>
+                <div class="detail-item"><strong>🧬 Why breast cancer?</strong><p>Classic binary classification; features from digitized cell nuclei. Interpretable, medical relevance.</p></div>
+                <div class="detail-item"><strong>📍 Real-world application</strong><p>Diagnostic tools, malignancy risk scoring, feature importance for tumor characteristics.</p></div>
+            </div>
+            <pre>from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix, classification_report, roc_curve, auc, roc_auc_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load dataset
+cancer = load_breast_cancer()
+X, y = cancer.data, cancer.target  # 0=malignant, 1=benign (but we'll treat 1 as positive)
+print(f"Dataset size: {X.shape}, classes: {cancer.target_names}")
+
+# Train/test split + scaling (important for logistic regression convergence)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Logistic Regression (L2 penalty by default)
+log_reg = LogisticRegression(max_iter=1000, random_state=42)
+log_reg.fit(X_train_scaled, y_train)
+y_pred = log_reg.predict(X_test_scaled)
+y_proba = log_reg.predict_proba(X_test_scaled)[:, 1]  # probability of class 1 (benign)
+
+# Confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(5,4))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Malignant', 'Benign'], yticklabels=['Malignant', 'Benign'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix - Breast Cancer')
+plt.show()
+
+# Classification metrics
+print(classification_report(y_test, y_pred, target_names=['Malignant', 'Benign']))
+
+# ROC curve & AUC
+fpr, tpr, thresholds = roc_curve(y_test, y_proba)
+roc_auc = auc(fpr, tpr)
+
+plt.figure(figsize=(7,5))
+plt.plot(fpr, tpr, label=f'Logistic Regression (AUC = {roc_auc:.3f})', color='#d95f8a', linewidth=2)
+plt.plot([0,1],[0,1], 'k--', alpha=0.7)
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve - Breast Cancer Diagnosis')
+plt.legend(loc="lower right")
+plt.grid(alpha=0.2)
+plt.show()
+print(f"Area under ROC curve (AUC): {roc_auc:.3f}")</pre>
+            <div class="insight-box">✅ On breast cancer dataset, logistic regression often achieves AUC > 0.99, meaning near-perfect separation. Confusion matrix shows very few misclassifications.</div>
+        </div>
+
+        <!-- understanding thresholds with sigmoid output -->
+        <div class="method-box">
+            <div class="method-header">⚖️ Adjusting Decision Threshold: Precision vs Recall Trade-off</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📌 What threshold tuning does</strong><p>Default 0.5. Lower threshold (e.g., 0.3) increases recall (catches more cancer) but increases false positives.</p></div>
+                <div class="detail-item"><strong>🎯 Why adjust?</strong><p>In critical medical diagnosis, we prefer high recall (avoid missing malignancy). ROC curve shows optimal threshold via Youden's J.</p></div>
+                <div class="detail-item"><strong>💡 Where applied</strong><p>Customizing business costs (fraud detection, disease screening).</p></div>
+            </div>
+            <pre># custom threshold effect on metrics
+threshold = 0.3
+y_pred_custom = (y_proba >= threshold).astype(int)
+custom_cm = confusion_matrix(y_test, y_pred_custom)
+tn, fp, fn, tp = custom_cm.ravel()
+print(f"Threshold = {threshold}: Recall = {tp/(tp+fn):.3f}, Precision = {tp/(tp+fp):.3f}")
+print(f"Default 0.5 threshold recall = {recall_score(y_test, y_pred):.3f}")</pre>
+        </div>
+
+        <!-- Quick reference table: classification metrics -->
+        <div class="section-title">📚 Metrics Cheat Sheet (What/Why/Where)</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefcfb; border-radius: 16px;">
+                <thead style="background:#f5e4ec;"><tr><th style="padding:12px;">Metric</th><th style="padding:12px;">What (formula)</th><th style="padding:12px;">Why important</th><th style="padding:12px;">Where scenario</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #f0e2e6;"><strong>Sensitivity / Recall</strong></td><td>TP/(TP+FN)</td><td>Captures true positives among actual positives</td><td>Cancer detection, security alarms</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #f0e2e6;"><strong>Precision</strong></td><td>TP/(TP+FP)</td><td>How many predicted positives are correct</td><td>Spam filtering, recommendation</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #f0e2e6;"><strong>F1-Score</strong></td><td>2(Prec*Recall)/(Prec+Recall)</td><td>Harmonic mean, balances both</td><td>Imbalanced classes</td></tr>
+                    <tr><td style="padding:10px;"><strong>ROC-AUC</strong></td><td>Area under TPR vs FPR</td><td>Model ranking ability, threshold invariant</td><td>Model comparison, any binary problem</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Where / Why sigmoid + LogLoss -->
+        <div class="two-col">
+            <div class="metric-card"><strong>🎯 Why Logistic > Linear for classification?</strong><br> Linear regression sensitive to outliers, predicts outside [0,1]. Logistic uses sigmoid + maximum likelihood (log-loss).<br><code>LogLoss = -[y log(p) + (1-y)log(1-p)]</code></div>
+            <div class="metric-card"><strong>🧪 Real-world insight: Breast Cancer</strong><br> Features like 'mean radius', 'worst texture' strongly predict malignancy. Logistic coefficients can rank feature importance.</div>
+        </div>
+
+        <div class="footer-note">
+            🏆 <strong>Key takeaways:</strong> Logistic Regression uses the sigmoid function for probabilistic classification. Confusion Matrix + ROC-AUC provide comprehensive evaluation beyond accuracy. In the breast cancer example, AUC > 0.99 shows excellent model discriminability. Adjust thresholds based on business/medical costs.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #9f5d7a;">🧪 Try: Use GridSearchCV to tune C (regularization) and see effect on ROC-AUC.</div>
+    </div>
+</div>
+</body>
+</html>
