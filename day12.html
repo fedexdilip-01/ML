@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Day 12: NLP Basics – Text Classification | Bag-of-Words, TF-IDF, Tokenization + SMS Spam Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1f2b;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5f8a 100%);
+            padding: 2.2rem 2.8rem;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .hero .sub {
+            font-size: 1rem;
+            margin-top: 0.7rem;
+            opacity: 0.92;
+            border-left: 3px solid #8bc9e6;
+            padding-left: 1rem;
+        }
+        .content {
+            padding: 2rem 2.5rem;
+        }
+        .topic-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+        .topic-card {
+            flex: 1;
+            background: #fafcfe;
+            border-radius: 1.5rem;
+            padding: 1.3rem 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 28px -12px rgba(0,0,0,0.1);
+        }
+        .topic-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .topic-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; color: #2c5f8a; }
+        .badge {
+            background: #e8f0f8;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.5rem 0 0.7rem;
+            color: #2c5f8a;
+        }
+        .section-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            border-left: 6px solid #2c5f8a;
+            padding-left: 1rem;
+            color: #1e3a5f;
+        }
+        .method-box {
+            background: #ffffff;
+            border-radius: 1.2rem;
+            border: 1px solid #e2eaf0;
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .method-header {
+            background: #eef3fa;
+            padding: 0.9rem 1.8rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: monospace;
+            border-bottom: 1px solid #dee6ef;
+            color: #2c5f8a;
+        }
+        .method-detail {
+            padding: 1.3rem 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .detail-item {
+            flex: 1;
+            min-width: 170px;
+        }
+        .detail-item strong {
+            font-weight: 700;
+            color: #3a7b9e;
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        code {
+            background: #edf4f9;
+            padding: 0.2rem 0.45rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #2c5f8a;
+        }
+        pre {
+            background: #121e2c;
+            color: #e2f0ff;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 1rem 0;
+        }
+        .insight-box {
+            background: #fef7e8;
+            border-left: 4px solid #e2a55e;
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.88rem;
+        }
+        .formula {
+            background: #eef3f7;
+            padding: 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: monospace;
+            margin: 0.8rem 0;
+        }
+        .two-col {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .comp-card {
+            background: #fafcfe;
+            border-radius: 1rem;
+            padding: 1rem;
+            flex: 1;
+            border: 1px solid #e2eef5;
+        }
+        .viz-svg {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        hr { margin: 2rem 0; border: none; height: 1px; background: linear-gradient(to right, #d0e0ec, transparent);}
+        .footer-note {
+            background: #edf4fa;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .content { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>📝 Day 12 – NLP Basics: Text Classification</h1>
+        <div class="sub">Bag-of-Words, TF-IDF, Tokenization | SMS Spam Detection with Naive Bayes</div>
+    </div>
+    <div class="content">
+        <!-- Core concepts -->
+        <div class="topic-grid">
+            <div class="topic-card"><div class="topic-icon">📚</div><div class="badge">Text Representation</div><h3>Bag-of-Words (BoW)</h3><p><strong>What?</strong> Represents text as word count vectors. Ignores order, only frequency.</p><p><strong>Why?</strong> Simple, interpretable, effective for classification.</p><p><strong>Where?</strong> Spam filtering, sentiment analysis, topic modeling.</p></div>
+            <div class="topic-card"><div class="topic-icon">⚖️</div><div class="badge">Weighted Frequency</div><h3>TF-IDF</h3><p><strong>What?</strong> Term Frequency × Inverse Document Frequency. Downweights common words.</p><p><strong>Why?</strong> Highlights discriminative words ("free", "win" for spam).</p><p><strong>Where?</strong> Information retrieval, document similarity, text classification.</p></div>
+            <div class="topic-card"><div class="topic-icon">✂️</div><div class="badge">Text Preparation</div><h3>Tokenization</h3><p><strong>What?</strong> Splits text into tokens (words, subwords, characters).</p><p><strong>Why?</strong> First step in any NLP pipeline. Handles punctuation, case, stopwords.</p><p><strong>Where?</strong> All text preprocessing pipelines.</p></div>
+        </div>
+
+        <!-- Tokenization Deep Dive -->
+        <div class="section-title">✂️ 1. Tokenization – Breaking Text into Tokens</div>
+        <div class="method-box">
+            <div class="method-header">🔤 From raw text to token list</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 Simple tokenization</strong><p>Split by whitespace + punctuation removal. "Hello, world!" → ["Hello", "world"]</p></div>
+                <div class="detail-item"><strong>🧠 Advanced tokenization</strong><p>NLTK, spaCy, or subword tokenizers (BPE) for OOV words.</p></div>
+                <div class="detail-item"><strong>⚙️ Preprocessing steps</strong><p>Lowercasing, stopword removal, stemming/lemmatization.</p></div>
+            </div>
+            <pre>import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+
+# Download required NLTK data (run once)
+# nltk.download('stopwords')
+
+def tokenize_and_clean(text):
+    # Lowercase
+    text = text.lower()
+    # Remove punctuation and digits
+    text = re.sub(r'[^\w\s]', '', text)
+    text = re.sub(r'\d+', '', text)
+    # Split into words
+    tokens = text.split()
+    # Remove stopwords
+    stop_words = set(stopwords.words('english'))
+    tokens = [word for word in tokens if word not in stop_words]
+    # Stemming
+    stemmer = PorterStemmer()
+    tokens = [stemmer.stem(word) for word in tokens]
+    return tokens
+
+sample = "WINNER!! Free entry to our $1000 lottery! Call now!"
+print("Original:", sample)
+print("Tokens:", tokenize_and_clean(sample))
+# Output: ['winner', 'free', 'entri', 'lotteri', 'call']</pre>
+            <div class="insight-box">💡 <strong>Pro tip:</strong> For spam detection, keep punctuation like '!!!' and '$' – they're strong spam indicators!</div>
+        </div>
+
+        <!-- Bag-of-Words Explained -->
+        <div class="section-title">📚 2. Bag-of-Words – Text to Numeric Vector</div>
+        <div class="method-box">
+            <div class="method-header">📊 Vocabulary creation + frequency counting</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 How it works</strong><p>1) Build vocabulary from all documents. 2) Create vector of word counts for each document.</p></div>
+                <div class="detail-item"><strong>🎯 Example</strong><p>["free money", "free call"] → vocab {free, money, call} → vectors [1,1,0] and [1,0,1]</p></div>
+                <div class="detail-item"><strong>⚙️ Limitations</strong><p>Loses word order, high dimensionality, common words dominate.</p></div>
+            </div>
+            <div class="viz-svg">
+                <svg width="100%" height="180" viewBox="0 0 800 180" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="800" height="180" fill="#f8fafc" rx="8"/>
+                    <text x="400" y="18" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold">Bag-of-Words: Document to Vector</text>
+                    <!-- Documents -->
+                    <rect x="30" y="40" width="120" height="50" fill="#e2e8f0" stroke="#2c5f8a" stroke-width="1.5" rx="5"/>
+                    <text x="90" y="58" text-anchor="middle" font-size="9">"free money"</text>
+                    <text x="90" y="72" text-anchor="middle" font-size="9">"free call"</text>
+                    
+                    <rect x="200" y="40" width="120" height="50" fill="#e2e8f0" stroke="#2c5f8a" stroke-width="1.5" rx="5"/>
+                    <text x="260" y="58" text-anchor="middle" font-size="9">"call now"</text>
+                    <text x="260" y="72" text-anchor="middle" font-size="9">"win money"</text>
+                    
+                    <!-- Arrow to vocabulary -->
+                    <line x1="150" y1="65" x2="195" y2="65" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowBoW)"/>
+                    
+                    <!-- Vocabulary -->
+                    <rect x="330" y="35" width="100" height="60" fill="#e63946" stroke="#c1272d" stroke-width="1.5" rx="5"/>
+                    <text x="380" y="52" text-anchor="middle" font-size="8" fill="white">Vocabulary</text>
+                    <text x="380" y="66" text-anchor="middle" font-size="7" fill="white">free, money,</text>
+                    <text x="380" y="80" text-anchor="middle" font-size="7" fill="white">call, now, win</text>
+                    
+                    <!-- Arrow to vectors -->
+                    <line x1="430" y1="65" x2="475" y2="65" stroke="#2c5f8a" stroke-width="1.5" marker-end="url(#arrowBoW)"/>
+                    
+                    <!-- Vectors -->
+                    <rect x="490" y="30" width="130" height="70" fill="#2e9c4a" stroke="#1f6e3a" stroke-width="1.5" rx="5"/>
+                    <text x="555" y="48" text-anchor="middle" font-size="8" fill="white">Sparse Vectors</text>
+                    <text x="555" y="64" text-anchor="middle" font-size="7" fill="white">[1,1,1,0,0]</text>
+                    <text x="555" y="78" text-anchor="middle" font-size="7" fill="white">[1,0,1,1,1]</text>
+                    
+                    <text x="660" y="65" font-size="12" fill="#2c5f8a">→ Count Matrix</text>
+                    <defs>
+                        <marker id="arrowBoW" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <p style="font-size:0.75rem; margin-top:0.3rem;">BoW creates vocabulary → each document becomes frequency vector over vocabulary</p>
+            </div>
+            <pre>from sklearn.feature_extraction.text import CountVectorizer
+
+corpus = [
+    "free money call now",
+    "win free money",
+    "call me back",
+    "urgent free lottery win"
+]
+
+vectorizer = CountVectorizer()
+X_bow = vectorizer.fit_transform(corpus)
+print("Vocabulary:", vectorizer.get_feature_names_out())
+print("\nBoW Matrix (dense):")
+print(X_bow.toarray())
+# Each row = document, each column = word frequency</pre>
+        </div>
+
+        <!-- TF-IDF Explained -->
+        <div class="section-title">⚖️ 3. TF-IDF – Smarter Word Weighting</div>
+        <div class="method-box">
+            <div class="method-header">📐 TF-IDF = Term Frequency × Inverse Document Frequency</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 TF (Term Frequency)</strong><p>How often word appears in document. More frequent = more important for this doc.</p></div>
+                <div class="detail-item"><strong>📈 IDF (Inverse Document Frequency)</strong><p>log(N / df). Rare words get higher weight. Common words ("the", "a") get low weight.</p></div>
+                <div class="detail-item"><strong>🎯 Why better than BoW?</strong><p>Downweights stopwords, highlights discriminative terms like "lottery", "winner" for spam.</p></div>
+            </div>
+            <div class="formula">📌 TF-IDF(t,d) = TF(t,d) × log(N / DF(t))</div>
+            <pre>from sklearn.feature_extraction.text import TfidfVectorizer
+
+tfidf_vectorizer = TfidfVectorizer()
+X_tfidf = tfidf_vectorizer.fit_transform(corpus)
+
+print("Feature names:", tfidf_vectorizer.get_feature_names_out())
+print("\nTF-IDF Matrix:")
+print(X_tfidf.toarray())
+print("\n'free' appears in 3 documents → lower weight than 'urgent' (rare)")</pre>
+        </div>
+
+        <!-- FULL EXAMPLE: SMS Spam Detection with Naive Bayes -->
+        <div class="section-title">📱 SMS Spam Detection – Complete Pipeline</div>
+        <div class="method-box">
+            <div class="method-header">📨 5,574 SMS messages (ham/spam) + Multinomial Naive Bayes</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Dataset</strong><p>SMS Spam Collection: 4,827 ham (normal), 747 spam. Real-world imbalanced.</p></div>
+                <div class="detail-item"><strong>🎯 Model</strong><p>Multinomial Naive Bayes – perfect for discrete word counts/TF-IDF.</p></div>
+                <div class="detail-item"><strong>⚙️ Pipeline</strong><p>Text cleaning → TF-IDF vectorization → Naive Bayes → Evaluate.</p></div>
+            </div>
+            <pre>import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load SMS dataset (use built-in or create realistic sample)
+# For demo, create realistic SMS data
+np.random.seed(42)
+n_samples = 5000
+ham_messages = [
+    "Hey, are we still meeting for lunch?",
+    "Thanks for the update, appreciate it",
+    "See you tomorrow at 5pm",
+    "Can you pick up some milk on your way home?",
+    "The project deadline has been extended",
+    "Happy birthday! Hope you have a great day",
+    "Don't forget to bring the documents",
+    "I'll call you later tonight",
+    "Meeting moved to 3pm in conference room A",
+    "Thanks for your help with the presentation"
+]
+spam_messages = [
+    "WINNER!! You've won a $1000 gift card! Click here",
+    "URGENT: Your account has been suspended. Verify now",
+    "FREE entry to our lottery, claim your prize",
+    "CONGRATULATIONS! You're our lucky winner",
+    "Lowest rates on loans, reply YES to apply",
+    "You have been selected for a free iPhone",
+    "Act now! Limited time offer",
+    "Claim your $500 Walmart gift card",
+    "Your verification code is 123456",
+    "Exclusive deal just for you, click link"
+]
+
+# Generate dataset
+ham_texts = np.random.choice(ham_messages, size=int(n_samples*0.87), replace=True)
+spam_texts = np.random.choice(spam_messages, size=int(n_samples*0.13), replace=True)
+texts = list(ham_texts) + list(spam_texts)
+labels = ['ham'] * len(ham_texts) + ['spam'] * len(spam_texts)
+
+df = pd.DataFrame({'text': texts, 'label': labels})
+print(f"Dataset size: {len(df)}")
+print(df['label'].value_counts())
+
+# Train/test split
+X_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], 
+                                                    test_size=0.2, random_state=42, stratify=df['label'])
+
+# Build pipeline: TF-IDF + Naive Bayes
+pipeline = Pipeline([
+    ('tfidf', TfidfVectorizer(stop_words='english', max_features=5000, ngram_range=(1,2))),
+    ('nb', MultinomialNB())
+])
+
+# Train
+pipeline.fit(X_train, y_train)
+
+# Predict
+y_pred = pipeline.predict(X_test)
+
+# Evaluate
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\n✅ Accuracy: {accuracy:.4f}")
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(6,5))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['ham', 'spam'], yticklabels=['ham', 'spam'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('SMS Spam Detection - Confusion Matrix')
+plt.show()
+
+# Show example predictions
+sample_messages = [
+    "Hi honey, I'll be home soon",
+    "CONGRATULATIONS! You won a free cruise!",
+    "Reminder: dentist appointment tomorrow at 10am",
+    "URGENT: Your account will be closed. Call now!"
+]
+for msg in sample_messages:
+    pred = pipeline.predict([msg])[0]
+    proba = pipeline.predict_proba([msg])[0]
+    print(f"\nMessage: '{msg}'")
+    print(f"Prediction: {pred} (spam prob: {proba[1]:.3f})")</pre>
+            <div class="insight-box">📊 <strong>Expected results:</strong> Naive Bayes + TF-IDF achieves 97-99% accuracy on SMS spam. Common false positives: normal messages with 'free' or 'win' in legitimate contexts.</div>
+        </div>
+
+        <!-- Feature Importance: Top Spam Words -->
+        <div class="method-box">
+            <div class="method-header">🔍 Most Predictive Words for Spam Detection</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📊 Visualize top features</strong><p>Extract feature names and Naive Bayes log probabilities.</p></div>
+            </div>
+            <pre># Get feature names and model coefficients
+tfidf = pipeline.named_steps['tfidf']
+nb = pipeline.named_steps['nb']
+feature_names = tfidf.get_feature_names_out()
+
+# Get log probabilities for spam class (class 1)
+spam_log_probs = nb.feature_log_prob_[1]
+ham_log_probs = nb.feature_log_prob_[0]
+
+# Calculate ratio (spam vs ham)
+spam_ratio = np.exp(spam_log_probs - ham_log_probs)
+top_spam_idx = np.argsort(spam_ratio)[-20:][::-1]
+
+print("Top 20 words most indicative of SPAM:")
+for idx in top_spam_idx:
+    print(f"  {feature_names[idx]}: {spam_ratio[idx]:.2f}x more likely in spam")
+
+# Visualize
+top_words = [feature_names[i] for i in top_spam_idx[:10]]
+top_ratios = [spam_ratio[i] for i in top_spam_idx[:10]]
+
+plt.figure(figsize=(10,5))
+plt.barh(top_words[::-1], top_ratios[::-1], color='#e63946')
+plt.xlabel('Spam/Ham Odds Ratio')
+plt.title('Top 10 Words Indicative of Spam Messages')
+plt.tight_layout()
+plt.show()</pre>
+        </div>
+
+        <!-- BoW vs TF-IDF Comparison -->
+        <div class="section-title">📊 Text Vectorization Comparison</div>
+        <div style="overflow-x: auto;">
+            <table style="width:100%; border-collapse: collapse; background: #fefefe; border-radius: 16px;">
+                <thead style="background:#e2ecf5;"><tr><th style="padding:12px;">Method</th><th style="padding:12px;">Weighting</th><th style="padding:12px;">Pros</th><th style="padding:12px;">Cons</th><th style="padding:12px;">Best for</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>CountVectorizer (BoW)</strong></td><td style="padding:10px;">Raw word counts</td><td style="padding:10px;">Simple, interpretable, fast</td><td style="padding:10px;">Common words dominate, no semantic meaning</td><td style="padding:10px;">Baseline models, short text</td></tr>
+                    <tr><td style="padding:10px; border-bottom:1px solid #e6edf2;"><strong>TF-IDF Vectorizer</strong></td><td style="padding:10px;">Frequency × inverse document freq</td><td style="padding:10px;">Downweights common words, highlights discriminative terms</td><td style="padding:10px;">Still bag-of-words (loses order)</td><td style="padding:10px;">Spam detection, search engines, document similarity</td></tr>
+                    <tr><td style="padding:10px;"><strong>Word Embeddings (Word2Vec)</strong></td><td style="padding:10px;">Dense vectors (50-300 dims)</td><td style="padding:10px;">Captures semantic meaning, similarity</td><td style="padding:10px;">More complex, needs more data</td><td style="padding:10px;">Advanced NLP, neural networks</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Preprocessing Pipeline Details -->
+        <div class="two-col">
+            <div class="comp-card"><strong>📝 Text Preprocessing Steps</strong><br>1. Lowercase<br>2. Remove punctuation/numbers<br>3. Tokenization<br>4. Stopword removal<br>5. Stemming/Lemmatization<br>6. TF-IDF vectorization</div>
+            <div class="comp-card"><strong>🎯 Why Naive Bayes for Text?</strong><br>• Fast, works well with high dimensions<br>• Handles sparse data naturally<br>• Probabilistic output<br>• Performs well despite "naive" independence assumption</div>
+        </div>
+
+        <!-- Handling Imbalanced Data -->
+        <div class="method-box">
+            <div class="method-header">⚖️ Handling Class Imbalance in Spam Detection</div>
+            <div class="method-detail">
+                <div class="detail-item"><strong>📐 The problem</strong><p>Only 13% spam in typical SMS datasets. Model might bias toward ham.</p></div>
+                <div class="detail-item"><strong>🎯 Solutions</strong><p>Use class_weight='balanced', oversample spam (SMOTE), or adjust decision threshold.</p></div>
+            </div>
+            <pre># Naive Bayes with class weighting
+nb_balanced = MultinomialNB(class_prior=[0.5, 0.5])  # Force equal prior
+# Or use class_weight in other models
+from sklearn.ensemble import RandomForestClassifier
+rf_balanced = RandomForestClassifier(class_weight='balanced')
+
+# Adjust prediction threshold for better recall
+probs = pipeline.predict_proba(X_test)[:, 1]  # spam probability
+y_pred_custom = (probs > 0.3).astype(int)  # lower threshold = more spam detection
+print(f"With default threshold 0.5: recall for spam = {recall_score(y_test, y_pred)}")
+print(f"With threshold 0.3: recall for spam = {recall_score(y_test, y_pred_custom)}")</pre>
+        </div>
+
+        <div class="footer-note">
+            🌟 <strong>Day 12 Summary:</strong> Text classification converts raw text to numerical features via tokenization, Bag-of-Words, or TF-IDF. TF-IDF improves BoW by downweighting common words. The SMS spam detection pipeline (TF-IDF + Multinomial Naive Bayes) achieves 97-99% accuracy. Key insights: preprocessing matters, TF-IDF highlights discriminative spam words like "winner", "free", "urgent", and Naive Bayes is efficient and effective for text.
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: #4f7ea3;">🧪 Try: Add n-grams (bigrams like "free entry"), use different classifiers (SVM, Logistic Regression), or try word embeddings (Word2Vec)!</div>
+    </div>
+</div>
+</body>
+</html>
